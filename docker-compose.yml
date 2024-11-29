@@ -1,0 +1,11 @@
+version: '3'
+services:
+  web:
+    build: ./front
+    ports:
+      - 4545:80
+  back:
+    image: myback
+    build: ./back
+    ports:
+      - 8000:8000
