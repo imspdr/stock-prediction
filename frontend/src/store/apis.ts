@@ -1,5 +1,6 @@
 import axios from "axios";
 import { TimeseriesData, NewsData, StockData } from "./types";
+import tsSample from "./timeseries.json";
 
 const BACKURL = "/back";
 
@@ -17,14 +18,14 @@ export const predictAPI = {
   },
   getNews: async (keyword: string) => {
     const ret = await axios
-      .get(BACKURL + `/crawl_new/${keyword}`)
+      .get(BACKURL + `/crawl_news/${keyword}`)
       .then((data: any) => {
         return data.data;
       })
       .catch((e) => {
         return [];
       });
-    return ret as NewsData;
+    return ret as NewsData[];
   },
   getTimeseriesData: async (code: string, length: number, period: number) => {
     const ret = await axios
@@ -35,6 +36,6 @@ export const predictAPI = {
       .catch((e) => {
         return [];
       });
-    return ret as TimeseriesData[];
+    return ret as TimeseriesData;
   },
 };

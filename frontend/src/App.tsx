@@ -1,14 +1,12 @@
 import { observer } from "mobx-react";
-import TextField from "@mui/material/TextField";
 import { useRootStore } from "@src/store/RootStoreProvider";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Route, Routes, useNavigate, Navigate } from "react-router-dom";
-import { Suspense, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Typography } from "@mui/material";
 import { css } from "@emotion/react";
 import { unselectable } from "@src/util";
-import Autocomplete from "@mui/material/Autocomplete";
 import ThemeToggle from "@src/components/ThemeToggle";
+import MainPage from "./components/MainPage";
 
 const lightTheme = createTheme({
   palette: {
@@ -23,7 +21,6 @@ const darkTheme = createTheme({
 });
 
 function App() {
-  const navigate = useNavigate();
   const rootStore = useRootStore();
   const [darkMode, setDarkMode] = useState(false);
 
@@ -79,35 +76,11 @@ function App() {
             height: 48px;
 
             min-width: 300px;
-            padding-left: 10px;
+            padding: 0px 10px;
             ${unselectable}
           `}
         >
-          <Typography onClick={() => navigate("/")}>{"IMSPDR / cotevis"}</Typography>
-          <Autocomplete
-            disablePortal
-            options={rootStore.kospi200.map((stock) => {
-              return {
-                label: stock.name,
-                id: stock.code,
-              };
-            })}
-            isOptionEqualToValue={(option, value) => {
-              return option.id === value.id;
-            }}
-            sx={{ width: 300, height: 60 }}
-            renderInput={(params) => <TextField {...params} label="종목" />}
-            onChange={(e, v) => {
-              if (v && v.id) {
-                rootStore.selectedCode = v.id;
-                const useCache = rootStore.cacheData.find((stock) => stock.code === v.id);
-                if (useCache) return;
-                else {
-                  rootStore.getNewData(v.id);
-                }
-              }
-            }}
-          />
+          <Typography>{"IMSPDR / stock-prediction"}</Typography>
           <ThemeToggle onClick={toggleTheme} isDark={darkMode} />
         </div>
         <div
@@ -118,7 +91,9 @@ function App() {
             height: calc(100vh - 48px);
             ${unselectable}
           `}
-        ></div>
+        >
+          <MainPage />
+        </div>
       </>
     </ThemeProvider>
   );

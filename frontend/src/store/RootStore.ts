@@ -7,7 +7,7 @@ export class RootStore {
   kospi200: StockData[];
   cacheData: {
     code: string;
-    timeseriesData: TimeseriesData[];
+    timeseriesData: TimeseriesData;
     newsData: NewsData[];
   }[];
 
@@ -18,10 +18,27 @@ export class RootStore {
     makeAutoObservable(this);
   }
   setKospi200 = async () => {
-    const ret = await predictAPI.getKospi200();
-    runInAction(() => {
-      this.kospi200 = ret;
-    });
+    // const ret = await predictAPI.getKospi200();
+    // runInAction(() => {
+    //   this.kospi200 = ret;
+    // });
   };
-  getNewData = async (code: string) => {};
+  getNewData = async (code: string) => {
+    // const ret = await predictAPI.getTimeseriesData(code, 20, 100);
+    // const stock = this.kospi200.find((stock) => stock.code === code);
+    // let newss: NewsData[] = [];
+    // if (stock) {
+    //   newss = await predictAPI.getNews(stock.name);
+    // }
+    // runInAction(() => {
+    //   this.cacheData = [
+    //     ...this.cacheData,
+    //     {
+    //       code: code,
+    //       timeseriesData: ret,
+    //       newsData: newss,
+    //     },
+    //   ];
+    // });
+  };
 }

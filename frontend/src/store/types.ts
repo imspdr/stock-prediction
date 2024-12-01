@@ -8,22 +8,24 @@ export type NewsData = {
   link: string;
 };
 
-export type TimeseriesData = {
+export type GivenData = {
+  ds: string;
+  y: number;
+};
+export type PredictedData = {
+  index: number;
   predicted: number;
   ds: string;
   trend: number;
-  yhat_lower: number;
-  yhat_upper: number;
   trend_lower: number;
   trend_upper: number;
+  yhat_lower: number;
+  yhat_upper: number;
   additive_terms: number;
-  additive_terms_lower: number;
-  additive_terms_upper: number;
-  weekly: number;
-  weekly_lower: number;
-  weekly_upper: number;
-  multiplicative_terms: number;
-  multiplicative_terms_lower: number;
-  multiplicative_terms_upper: number;
   yhat: number;
+};
+
+export type TimeseriesData = {
+  given: GivenData[];
+  predicted: PredictedData[];
 };

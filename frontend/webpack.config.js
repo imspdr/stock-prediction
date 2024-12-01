@@ -69,7 +69,7 @@ module.exports = (env) => {
       devServer: {
         historyApiFallback: true,
         host: "localhost",
-        port: 5454,
+        port: 4545,
         proxy: [{
           context: ["/back"],
           target: "http://localhost:8000",
