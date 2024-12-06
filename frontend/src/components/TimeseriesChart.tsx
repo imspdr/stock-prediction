@@ -36,7 +36,7 @@ export default function TimeseriesChart(props: {
     ...props.predictedData.map((d) => d.trend_lower),
     ...props.givenData.map((d) => d.y)
   );
-  const maxAbsAdditive = Math.max(...props.predictedData.map((d) => d.additive_terms));
+  const maxAbsAdditive = Math.max(...props.predictedData.map((d) => Math.abs(d.additive_terms)));
 
   const xScale = (x: number) => (x / (length - 1)) * (width - 2 * padding) + padding;
   const yScale = (y: number) =>
@@ -74,11 +74,19 @@ export default function TimeseriesChart(props: {
         aspect-ratio: 1.6 / 1;
         background-color: var(--paper);
         .data-transition {
-          transition: 1s ease-in;
+          transition: d 0.5s ease-in;
+        }
+        .cy-transition {
+          transition: cy 0.5s ease-in;
         }
       `}
-      onClick={() => setDivided((v) => !v)}
     >
+      <div>
+        <div onClick={() => setDivided((v) => !v)}> divide</div>
+
+        <div onClick={() => setDivided((v) => !v)}> -</div>
+        <div onClick={() => setDivided((v) => !v)}> +</div>
+      </div>
       <svg viewBox="0 0 1600 1000">
         {/* {xAxis.map((y) => (
           <path d={`M ${yAxis[0]} ${y} L ${yAxis[1]} ${y}`} stroke="var(--foreground)" />
@@ -87,10 +95,10 @@ export default function TimeseriesChart(props: {
         {props.givenData.map((data: GivenData, i: number) => {
           return (
             <circle
-              className="data-transition"
+              className="cy-transition"
               cx={xScale(i)}
               cy={divided ? trendScale(data.y) : yScale(data.y)}
-              r={2}
+              r={3}
               fill={"var(--foreground)"}
             />
           );
