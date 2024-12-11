@@ -11,6 +11,9 @@ export type NewsData = {
 export type GivenData = {
   ds: string;
   y: number;
+  start: number;
+  upper: number;
+  lower: number;
 };
 export type PredictedData = {
   index: number;
