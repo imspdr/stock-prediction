@@ -15,10 +15,15 @@ export default function TimeseriesChart(props: {
   const [transitionOn, setTransitionOn] = useState(false);
   const [scrolling, setScrolling] = useState(false);
   const [startX, setStartX] = useState(0);
+  const [mousePos, setMousePos] = useState({
+    x: 0,
+    y: 0,
+  });
 
   useEffect(() => {
     setNowIndex((v) => Math.min(length - scaledLength, v));
   }, [scale]);
+
   useEffect(() => {
     setTransitionOn(false);
   }, [divided]);
@@ -41,12 +46,37 @@ export default function TimeseriesChart(props: {
   const width = 1600;
   const height = 1000;
   const padding = 50;
-  const leftPadding = 50;
-  const rightPadding = 100;
+  const leftPadding = 30;
+  const rightPadding = 150;
   const scrollWidth = 5;
+
+  const paddingTop = 100;
 
   const predictedColor = "var(--highlight)";
   const givenColor = "var(--chart-gray)";
+
+  const hoverTexts = [
+    {
+      label: "날짜",
+      value: "ds",
+    },
+    {
+      label: "종가",
+      value: "y",
+    },
+    {
+      label: "시가",
+      value: "start",
+    },
+    {
+      label: "고가",
+      value: "upper",
+    },
+    {
+      label: "저가",
+      value: "lower",
+    },
+  ];
 
   // select data using state
   const length = props.predictedData.length;
@@ -83,10 +113,12 @@ export default function TimeseriesChart(props: {
   const xScale = (x: number) =>
     ((x - nowIndex) / (scaledLength - 1)) * (width - leftPadding - rightPadding) + leftPadding;
   const baseScale = (y: number) =>
-    height - padding - ((y - minY) / (maxY - minY)) * (height - 2 * padding);
+    height - padding - ((y - minY) / (maxY - minY)) * (height - 2 * padding - paddingTop);
 
   const trendScale = (y: number) =>
-    height / 2 - padding - ((y - minTrend) / (maxTrend - minTrend)) * (height / 2 - 2 * padding);
+    height / 2 -
+    padding -
+    ((y - minTrend) / (maxTrend - minTrend)) * (height / 2 - 2 * padding - paddingTop);
   const additiveScale = (y: number) =>
     height -
     padding -
@@ -102,9 +134,10 @@ export default function TimeseriesChart(props: {
   };
   // values for grid
   const yGap = Math.round((maxY - minY) / 8);
+  const trendGap = Math.round((maxTrend - minTrend) / 8);
   const xAxis = [leftPadding, width - rightPadding];
   const yAxis = [...new Array(9)].map((_, i) => {
-    return Math.round(divided ? minTrend : minY) + i * yGap;
+    return Math.round(divided ? minTrend : minY) + i * (divided ? trendGap : yGap);
   });
   const additiveYAxis = [-maxAbsAdditive, 0, maxAbsAdditive];
   const datas = [
@@ -150,40 +183,51 @@ export default function TimeseriesChart(props: {
             transition: ${transitionOn ? "y 0.3s ease-in" : "0s"};
           }
         `}
-        onMouseDown={(e) => {
-          setScrolling(true);
-          setStartX(e.clientX);
-        }}
-        onMouseUp={() => {
-          setScrolling(false);
-        }}
-        onMouseMove={(e) => {
-          if (scrolling && scale > 1) {
-            setNowIndex((v) => {
-              return Math.min(
-                Math.max(
-                  0,
-                  v + Math.floor(((startX - e.clientX) / window.innerWidth) * scaledLength)
-                ),
-                length - scaledLength
-              );
-            });
-          }
-        }}
-        onWheel={(e) => {
-          if (e.deltaY < 0) {
-            setTransitionOn(false);
-            setScale((v) => (v > 8 ? 1 : v * 2));
-          } else {
-            setTransitionOn(false);
-            setScale((v) => (v > 1 ? v / 2 : 1));
-          }
-        }}
-        onMouseLeave={() => {
-          setScrolling(false);
-        }}
       >
-        <svg viewBox={`0 0 ${width} ${height}`}>
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          onMouseDown={(e) => {
+            setScrolling(true);
+            setStartX(e.clientX);
+          }}
+          onMouseUp={() => {
+            setScrolling(false);
+          }}
+          onMouseMove={(e) => {
+            if (scrolling && scale > 1) {
+              setNowIndex((v) => {
+                return Math.min(
+                  Math.max(
+                    0,
+                    v + Math.floor(((startX - e.clientX) / window.innerWidth) * scaledLength)
+                  ),
+                  length - scaledLength
+                );
+              });
+            }
+            const svgElement = e.currentTarget;
+            const rect = svgElement.getBoundingClientRect();
+
+            const x = ((e.clientX - rect.left) / rect.width) * width;
+            const y = ((e.clientY - rect.top) / rect.height) * height;
+            setMousePos({
+              x: Math.max(leftPadding, Math.min(x, width - rightPadding)),
+              y: Math.max(padding + paddingTop - 10, Math.min(y, height - padding + 10)),
+            });
+          }}
+          onWheel={(e) => {
+            if (e.deltaY < 0) {
+              setTransitionOn(false);
+              setScale((v) => (v > 8 ? 16 : v * 2));
+            } else {
+              setTransitionOn(false);
+              setScale((v) => (v > 1 ? v / 2 : 1));
+            }
+          }}
+          onMouseLeave={() => {
+            setScrolling(false);
+          }}
+        >
           {/* {grid line} */}
           {yAxis.map((y) => (
             <>
@@ -194,9 +238,9 @@ export default function TimeseriesChart(props: {
                 className="y-transition"
               />
               <text
-                x={width - (rightPadding * 2) / 3}
-                y={yScale(y) + 5}
-                fontSize={20}
+                x={width - rightPadding + 25}
+                y={yScale(y) + 10}
+                fontSize={30}
                 fill={"var(--foreground)"}
                 className="y-transition"
               >
@@ -223,9 +267,9 @@ export default function TimeseriesChart(props: {
                       className="y-transition"
                     />
                     <text
-                      x={width - (rightPadding * 2) / 3}
-                      y={additiveScale(y) + 5}
-                      fontSize={20}
+                      x={width - rightPadding + 25}
+                      y={additiveScale(y) + 10}
+                      fontSize={30}
                       fill={"var(--foreground)"}
                       className="y-transition"
                     >
@@ -332,7 +376,7 @@ export default function TimeseriesChart(props: {
               fill="var(--scroll-color)"
             />
           )}
-          {/* givenData dots */}
+          {/* givenData chart */}
           {selectedGivenData.map((data: GivenData, i: number) => {
             const realIndex = nowIndex + i;
             return (
@@ -363,6 +407,129 @@ export default function TimeseriesChart(props: {
               </>
             );
           })}
+          {/* hovered text */}
+          {mousePos.x > leftPadding &&
+            mousePos.x < width - rightPadding &&
+            mousePos.y <= height - padding + 1 &&
+            mousePos.y >= padding + paddingTop - 1 &&
+            (function () {
+              const price = !divided
+                ? Math.round(
+                    (1 -
+                      (mousePos.y - padding - paddingTop) / (height - padding * 2 - paddingTop)) *
+                      (maxY - minY) +
+                      minY
+                  )
+                : mousePos.y < height / 2 - padding + 10
+                ? Math.round(
+                    (1 - (mousePos.y - padding) / (height / 2 - padding * 2 - paddingTop)) *
+                      (maxTrend - minTrend) +
+                      minTrend
+                  )
+                : mousePos.y < height / 2 + padding - 10
+                ? undefined
+                : Math.round(
+                    (((height * 3) / 4 - mousePos.y) / (height / 4 - padding)) * maxAbsAdditive
+                  );
+              const y = divided ? Math.min(mousePos.y) : mousePos.y;
+              const idx = Math.floor(
+                ((mousePos.x - leftPadding) / (width - leftPadding - rightPadding)) * scaledLength
+              );
+              const x =
+                leftPadding + (idx * (width - leftPadding - rightPadding)) / (scaledLength - 1);
+              const drawBox =
+                selectedGivenData[idx] &&
+                price &&
+                price >= selectedGivenData[idx]?.lower &&
+                price <= selectedGivenData[idx]?.upper;
+              const drawBoxHeight = 220;
+              const drawBoxWidth = 250;
+              const priceBoxHeight = 40;
+              return (
+                <>
+                  {(price == 0 || !!price) && (
+                    <>
+                      <path
+                        d={`M ${xAxis[0]} ${y} L ${xAxis[1]} ${y}`}
+                        stroke="var(--chart-grid)"
+                        strokeWidth={3}
+                        className="y-transition"
+                      />
+                      <rect
+                        x={width - rightPadding}
+                        y={y + 5 - priceBoxHeight / 2}
+                        fill={"var(--foreground)"}
+                        width={rightPadding - 5}
+                        height={priceBoxHeight}
+                        rx={10}
+                        ry={10}
+                      />
+                      <text
+                        x={width - rightPadding + 20}
+                        y={y + 15}
+                        fontSize={35}
+                        fill={"var(--paper)"}
+                        className="y-transition"
+                      >
+                        {price}
+                      </text>
+                    </>
+                  )}
+
+                  <path
+                    d={`M ${x} ${padding + paddingTop} L ${x} ${height - padding}`}
+                    stroke="var(--chart-grid)"
+                    strokeWidth={3}
+                    className="y-transition"
+                  />
+                  <rect
+                    x={Math.max(0, x - 90)}
+                    y={height - padding + 25 - priceBoxHeight / 2}
+                    fill={"var(--foreground)"}
+                    width={180}
+                    height={priceBoxHeight}
+                    rx={10}
+                    ry={10}
+                  />
+                  <text
+                    x={Math.max(0, x - 90) + 10}
+                    y={height - padding + 35}
+                    fontSize={35}
+                    fill={"var(--paper)"}
+                    className="y-transition"
+                  >
+                    {nowIndex + idx < props.givenData.length
+                      ? selectedGivenData[idx]?.ds
+                      : nowIndex + idx}
+                  </text>
+                  {drawBox && (
+                    <>
+                      <rect
+                        y={y > height / 2 ? y - drawBoxHeight : y}
+                        x={x > width / 2 ? x - drawBoxWidth : x}
+                        width={drawBoxWidth}
+                        height={drawBoxHeight}
+                        fill={"var(--paper)"}
+                      />
+                      {hoverTexts.map((item, index) => {
+                        return (
+                          <text
+                            y={(y > height / 2 ? y - drawBoxHeight : y) + (index + 1) * 40}
+                            x={(x > width / 2 ? x - drawBoxWidth : x) + 10}
+                            fontSize={30}
+                            fill={"var(--foreground)"}
+                          >
+                            {`${item.label}     ${
+                              selectedGivenData[idx]![item.value as keyof GivenData]
+                            }`}
+                          </text>
+                        );
+                      })}
+                    </>
+                  )}
+                </>
+              );
+            })()}
         </svg>
       </div>
     </>
