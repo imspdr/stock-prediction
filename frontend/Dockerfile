@@ -9,6 +9,6 @@ FROM nginx:latest
 RUN rm -rf /etc/nginx/conf.d
 COPY ./nginx.conf /etc/nginx/conf.d/
 
-COPY --from=builder /build /usr/share/nginx/html
+COPY --from=builder /docs /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

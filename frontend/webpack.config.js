@@ -100,10 +100,6 @@ module.exports = (env) => {
           favicon: "imspdr.png",
           filename: "index.html",
         }),
-        new HtmlWebpackPlugin({
-          template: path.resolve(__dirname, "src/404.html"),
-          filename: "404.html",
-        }),
         new CleanWebpackPlugin(),
       ],
       module: {

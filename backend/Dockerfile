@@ -1,6 +1,8 @@
 FROM python:3.10
 
+WORKDIR /root
 ADD requirements.txt /root
+RUN cd
 RUN pip install -r requirements.txt
 ADD api /root/api
 ADD main.py /root

@@ -1,11 +1,11 @@
 version: '3'
 services:
-  web:
-    build: ./front
+  stock-front:
+    build: ./frontend
     ports:
       - 4545:80
-  back:
+  stock-back:
     image: myback
-    build: ./back
+    build: ./backend
     ports:
       - 8000:8000

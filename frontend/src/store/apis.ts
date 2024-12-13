@@ -1,7 +1,5 @@
 import axios from "axios";
 import { TimeseriesData, NewsData, StockData } from "./types";
-import tsSample from "./timeseries.json";
-
 const BACKURL = "/back";
 
 export const predictAPI = {
