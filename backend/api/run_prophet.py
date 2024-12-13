@@ -23,9 +23,12 @@ def run_prophet(given_data, periods: int=100):
         for index, line in enumerate(forecast.iterrows()):
             newObject = {}
             newObject["predicted"] = 0 if index < given_length else 1
+            newObject["index"] = index
             for k, v in line[1].items():
                 if not is_number(v):
                     v = str(v)
+                else:
+                    v = round(v)
                 newObject[k] = v
             predictions.append(newObject)
         return predictions

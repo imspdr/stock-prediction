@@ -1,6 +1,6 @@
 import { css } from "@emotion/react";
 import { Circle } from "@mui/icons-material";
-import { GivenData, PredictedData } from "@src/store/types";
+import { GivenData, PredictedData, TimeseriesData } from "@src/store/types";
 import { useState, useEffect, useCallback } from "react";
 
 export default function TimeseriesChart(props: {
@@ -50,7 +50,7 @@ export default function TimeseriesChart(props: {
   const rightPadding = 150;
   const scrollWidth = 5;
 
-  const paddingTop = 100;
+  const paddingTop = 50;
 
   const predictedColor = "var(--highlight)";
   const givenColor = "var(--chart-gray)";
@@ -75,6 +75,21 @@ export default function TimeseriesChart(props: {
     {
       label: "저가",
       value: "lower",
+    },
+  ];
+
+  const topperTexts = [
+    {
+      label: "y hat",
+      value: "yhat",
+    },
+    {
+      label: "trend",
+      value: "trend",
+    },
+    {
+      label: "pattern",
+      value: "additive_terms",
     },
   ];
 
@@ -156,32 +171,18 @@ export default function TimeseriesChart(props: {
   ];
   return (
     <>
-      <div>
-        <div
-          onClick={() => {
-            setTransitionOn(true);
-            setDivided((v) => !v);
-          }}
-        >
-          {" "}
-          divide
-        </div>
-      </div>
       <div
         css={css`
-          width: 90%;
-          max-width: 800px;
+          width: calc(100% - 2px);
+          max-width: 998px;
+          min-width: 278px;
           background-color: var(--paper);
           cursor: ${scrolling ? "grabbing" : "grab"};
-          .data-transition {
-            transition: ${transitionOn ? "d 0.3s ease-in" : "0s"};
-          }
-          .cy-transition {
-            transition: ${transitionOn ? "cy 0.3s ease-in" : "0s"};
-          }
           .y-transition {
-            transition: ${transitionOn ? "y 0.3s ease-in" : "0s"};
+            transition: ${transitionOn ? "0.3s ease-in" : "0s"};
           }
+          border-radius: 10px;
+          border: 1px solid;
         `}
       >
         <svg
@@ -217,10 +218,8 @@ export default function TimeseriesChart(props: {
           }}
           onWheel={(e) => {
             if (e.deltaY < 0) {
-              setTransitionOn(false);
-              setScale((v) => (v > 8 ? 16 : v * 2));
+              setScale((v) => (v >= length / 10 ? v : v * 2));
             } else {
-              setTransitionOn(false);
               setScale((v) => (v > 1 ? v / 2 : 1));
             }
           }}
@@ -250,13 +249,6 @@ export default function TimeseriesChart(props: {
           ))}
           {divided && (
             <>
-              <rect
-                x={0}
-                y={height / 2 - padding / 2}
-                height={padding}
-                width={width}
-                fill={"var(--background)"}
-              />
               {additiveYAxis.map((y) => {
                 return (
                   <>
@@ -264,14 +256,12 @@ export default function TimeseriesChart(props: {
                       d={`M ${xAxis[0]} ${additiveScale(y)} L ${xAxis[1]} ${additiveScale(y)}`}
                       stroke="var(--chart-grid)"
                       strokeWidth={1}
-                      className="y-transition"
                     />
                     <text
                       x={width - rightPadding + 25}
                       y={additiveScale(y) + 10}
                       fontSize={30}
                       fill={"var(--foreground)"}
-                      className="y-transition"
                     >
                       {y}
                     </text>
@@ -286,7 +276,7 @@ export default function TimeseriesChart(props: {
               <>
                 {divided ? (
                   <path
-                    className="data-transition"
+                    className="y-transition"
                     d={`${dataType.data
                       .map((d) =>
                         d.index === dataType.start
@@ -302,7 +292,7 @@ export default function TimeseriesChart(props: {
                   />
                 ) : (
                   <path
-                    className="data-transition"
+                    className="y-transition"
                     d={`${dataType.data
                       .map((d) =>
                         d.index === dataType.start
@@ -319,7 +309,7 @@ export default function TimeseriesChart(props: {
                 )}
 
                 <path
-                  className="data-transition"
+                  className="y-transition"
                   d={
                     divided
                       ? dataType.data
@@ -342,7 +332,7 @@ export default function TimeseriesChart(props: {
                   strokeWidth="3"
                 />
                 <path
-                  className="data-transition"
+                  className="y-transition"
                   d={
                     divided
                       ? dataType.data
@@ -381,19 +371,19 @@ export default function TimeseriesChart(props: {
             const realIndex = nowIndex + i;
             return (
               <>
-                {/* <circle
-                className="cy-transition"
-                cx={xScale(i)}
-                cy={divided ? trendScale(data.y) : yScale(data.y)}
-                r={3}
-                fill={"var(--foreground)"}
-              /> */}
                 <rect
                   className="y-transition"
-                  x={xScale(realIndex) - ((1 / (scaledLength - 1)) * (width - 2 * padding)) / 4}
+                  x={
+                    xScale(realIndex) -
+                    ((1 / (scaledLength - 1)) * (width - leftPadding - rightPadding)) / 4
+                  }
                   y={yScale(Math.max(data.y, data.start))}
                   height={Math.max(1, Math.abs(yScale(data.start) - yScale(data.y)))}
-                  width={((1 / (scaledLength - 1)) * (width - 2 * padding)) / 2}
+                  width={
+                    ((1 / (scaledLength - 1)) * (width - leftPadding - rightPadding)) /
+                    2 /
+                    (xScale(realIndex) >= width - rightPadding - 10 ? 2 : 1)
+                  }
                   fill={data.start > data.y ? "var(--chart-blue)" : "var(--chart-red)"}
                 />
                 <rect
@@ -475,7 +465,6 @@ export default function TimeseriesChart(props: {
                       </text>
                     </>
                   )}
-
                   <path
                     d={`M ${x} ${padding + paddingTop} L ${x} ${height - padding}`}
                     stroke="var(--chart-grid)"
@@ -519,7 +508,7 @@ export default function TimeseriesChart(props: {
                             fontSize={30}
                             fill={"var(--foreground)"}
                           >
-                            {`${item.label}     ${
+                            {`${item.label} - ${
                               selectedGivenData[idx]![item.value as keyof GivenData]
                             }`}
                           </text>
@@ -527,9 +516,90 @@ export default function TimeseriesChart(props: {
                       })}
                     </>
                   )}
+                  {idx < props.predictedData.length ? (
+                    <>
+                      {topperTexts.map((item, index) => {
+                        return (
+                          !!props.predictedData[nowIndex + idx] && (
+                            <text
+                              y={paddingTop}
+                              x={leftPadding + index * 210}
+                              fontSize={30}
+                              fill={"var(--foreground)"}
+                            >
+                              {`${item.label} ${
+                                props.predictedData[nowIndex + idx]![
+                                  item.value as keyof PredictedData
+                                ]
+                              }`}
+                            </text>
+                          )
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <></>
+                  )}
                 </>
               );
-            })()}
+            })()}{" "}
+          {/* {top side buttons} */}
+          {
+            <>
+              <rect
+                x={width - rightPadding - 120}
+                y={paddingTop - 40}
+                height={60}
+                width={120}
+                rx={30}
+                ry={30}
+                fill="var(--highlight)"
+              ></rect>
+              <text
+                x={width - rightPadding - 100}
+                y={paddingTop}
+                fontSize={30}
+                fill={"var(--foreground)"}
+                onClick={() => {
+                  setTransitionOn(true);
+                  setDivided((v) => !v);
+                }}
+              >
+                {divided ? "합치기" : "펼치기"}
+              </text>
+              <text
+                x={width - rightPadding + 25}
+                y={paddingTop}
+                fontSize={40}
+                fill={"var(--foreground)"}
+                onClick={() => {
+                  setScale((v) => (v > 1 ? v / 2 : 1));
+                }}
+              >
+                {"-"}
+              </text>
+              <text
+                x={width - rightPadding + 75}
+                y={paddingTop}
+                fontSize={40}
+                fill={"var(--foreground)"}
+                text-anchor="middle"
+              >
+                {scale}
+              </text>
+              <text
+                x={width - rightPadding + 105}
+                y={paddingTop + 3}
+                fontSize={40}
+                fill={"var(--foreground)"}
+                onClick={() => {
+                  setScale((v) => (v >= length / 10 ? v : v * 2));
+                }}
+              >
+                {"+"}
+              </text>
+            </>
+          }
         </svg>
       </div>
     </>

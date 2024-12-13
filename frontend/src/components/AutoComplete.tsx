@@ -9,11 +9,19 @@ function AutoComplete() {
   return (
     <div
       css={css`
-        padding: 10px;
+        max-width: 500px;
+        min-width: 280px;
+        width: 80%;
       `}
     >
       <Autocomplete
         disablePortal
+        css={css`
+          .MuiOutlinedInput-root {
+            border: 1px solid;
+            border-radius: 10px;
+          }
+        `}
         options={rootStore.kospi200.map((stock) => {
           return {
             label: stock.name,
@@ -23,10 +31,15 @@ function AutoComplete() {
         isOptionEqualToValue={(option, value) => {
           return option.id === value.id;
         }}
-        css={css`
-          width: 300px;
-        `}
-        renderInput={(params) => <TextField {...params} label="종목" />}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            placeholder="종목"
+            css={css`
+              background-color: var(--paper);
+            `}
+          />
+        )}
         onChange={(e, v) => {
           if (v && v.id) {
             rootStore.selectedCode = v.id;

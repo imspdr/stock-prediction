@@ -26,6 +26,6 @@ def crawl_news(search_name: str):
     return return_list
 
 if __name__ == "__main__":
-    print(crawl_news("삼성전자"))
+    print(crawl_news("LG"))
 
 

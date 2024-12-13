@@ -16,10 +16,23 @@ def crawl_stock_data(code: str, length: int = 10):
                 continue
 
             day = trtxt.split("03\">")[1].split("<")[0]
-            price = trtxt.split("p11\">")[1].split("<")[0]
+            p11 = trtxt.split("p11\">")
+            price = p11[1].split("<")[0]
+            if "보합" in trtxt:
+                start = p11[3].split("<")[0]
+                upper = p11[4].split("<")[0]
+                lower = p11[5].split("<")[0]
+            else:
+                start = p11[2].split("<")[0]
+                upper = p11[3].split("<")[0]
+                lower = p11[4].split("<")[0]
+
             result_data.append({
                 "ds": day,
-                "y": int(price.replace(",", ""))
+                "y": int(price.replace(",", "")),
+                "start": int(start.replace(",", "")),
+                "upper": int(upper.replace(",", "")),
+                "lower": int(lower.replace(",", ""))
             })
 
     result_data.reverse()

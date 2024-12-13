@@ -9,12 +9,14 @@ kst = pytz.timezone('Asia/Seoul')
 
 app = FastAPI()
 
-
 @app.get("/stock/{code}/length/{length}/period/{period}")
 def get_stock_data(code: str, length: int = 10, period: int = 100):
-    data = crawl_stock_data("005930", 10)
-    result = run_prophet(data)
-    return result
+    data = crawl_stock_data(code, length)
+    result = run_prophet(data, period)
+    return {
+        "given": data,
+        "predicted": result
+    }
 
 @app.get("/kospi200")
 def get_kospi_200():
