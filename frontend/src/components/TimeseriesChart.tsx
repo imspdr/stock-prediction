@@ -131,14 +131,15 @@ export default function TimeseriesChart(props: {
     height - padding - ((y - minY) / (maxY - minY)) * (height - 2 * padding - paddingTop);
 
   const trendScale = (y: number) =>
-    height / 2 -
+    paddingTop +
+    (height - paddingTop) / 2 -
     padding -
-    ((y - minTrend) / (maxTrend - minTrend)) * (height / 2 - 2 * padding - paddingTop);
+    ((y - minTrend) / (maxTrend - minTrend)) * ((height - paddingTop) / 2 - 2 * padding);
   const additiveScale = (y: number) =>
     height -
     padding -
-    (height / 2 - padding * 2) / 2 -
-    (y / maxAbsAdditive) * (height / 4 - padding);
+    ((height - paddingTop) / 2 - padding * 2) / 2 -
+    (y / maxAbsAdditive) * ((height - paddingTop) / 4 - padding);
 
   const yScale = (y: number) => {
     if (divided) {
@@ -410,16 +411,20 @@ export default function TimeseriesChart(props: {
                       (maxY - minY) +
                       minY
                   )
-                : mousePos.y < height / 2 - padding + 10
+                : mousePos.y < paddingTop + (height - paddingTop) / 2 - padding + 10
                 ? Math.round(
-                    (1 - (mousePos.y - padding) / (height / 2 - padding * 2 - paddingTop)) *
+                    (1 -
+                      (mousePos.y - padding - paddingTop) /
+                        ((height - paddingTop) / 2 - padding * 2)) *
                       (maxTrend - minTrend) +
                       minTrend
                   )
-                : mousePos.y < height / 2 + padding - 10
+                : mousePos.y < paddingTop + (height - paddingTop) / 2 + padding - 10
                 ? undefined
                 : Math.round(
-                    (((height * 3) / 4 - mousePos.y) / (height / 4 - padding)) * maxAbsAdditive
+                    ((((height - paddingTop) * 3) / 4 + paddingTop - mousePos.y) /
+                      ((height - paddingTop) / 4 - padding)) *
+                      maxAbsAdditive
                   );
               const y = divided ? Math.min(mousePos.y) : mousePos.y;
               const idx = Math.floor(
