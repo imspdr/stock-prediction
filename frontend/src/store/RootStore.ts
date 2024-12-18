@@ -14,7 +14,7 @@ export class RootStore {
   }[];
 
   constructor() {
-    this.selectedCode = "a";
+    this.selectedCode = "";
     this.kospi200 = [];
     this.cacheData = [];
     this.width = 800;
@@ -32,10 +32,10 @@ export class RootStore {
     });
   };
   setKospi200 = async () => {
-    // const ret = await predictAPI.getKospi200();
-    // runInAction(() => {
-    //   this.kospi200 = ret;
-    // });
+    const ret = await predictAPI.getKospi200();
+    runInAction(() => {
+      this.kospi200 = ret;
+    });
   };
   getNewData = async (code: string) => {
     const stock = this.kospi200.find((stock) => stock.code === code);

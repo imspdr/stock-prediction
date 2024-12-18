@@ -12,13 +12,13 @@ function MainPage() {
   const rootStore = useRootStore();
   const chartHeight = Math.round(((rootStore.height - 48) / 13) * 10);
   const newsHeight = Math.max(24, Math.min(chartHeight / 20, 48));
-  const selectedStock = {
-    code: "asd",
-    timeseriesData: timeseries,
-    newsData: newss,
-  };
+  // const selectedStock = {
+  //   code: "asd",
+  //   timeseriesData: timeseries,
+  //   newsData: newss,
+  // };
 
-  // const selectedStock = rootStore.cacheData.find((cache) => cache.code === rootStore.selectedCode);
+  const selectedStock = rootStore.cacheData.find((cache) => cache.code === rootStore.selectedCode);
   return (
     <div
       css={css`
