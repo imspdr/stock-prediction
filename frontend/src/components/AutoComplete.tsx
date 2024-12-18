@@ -1,59 +1,73 @@
 import { css } from "@emotion/react";
-import { observer } from "mobx-react";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-import { useRootStore } from "@src/store/RootStoreProvider";
+import { Skeleton, TextField, Autocomplete } from "@mui/material";
+import { StockData } from "@src/store/types";
 
-function AutoComplete() {
-  const rootStore = useRootStore();
+export default function AutoComplete(props: {
+  height: number;
+  kospi200: StockData[];
+  onSelected: (v: string) => void;
+}) {
   return (
-    <div
-      css={css`
-        max-width: 500px;
-        min-width: 280px;
-        width: 80%;
-      `}
-    >
-      <Autocomplete
-        disablePortal
-        css={css`
-          .MuiOutlinedInput-root {
-            border: 1px solid;
-            border-radius: 10px;
-            height: 48px;
-          }
-        `}
-        options={rootStore.kospi200.map((stock) => {
-          return {
-            label: stock.name,
-            id: stock.code,
-          };
-        })}
-        isOptionEqualToValue={(option, value) => {
-          return option.id === value.id;
-        }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            placeholder="종목"
+    <>
+      {props.kospi200.length > 0 ? (
+        <div
+          css={css`
+            min-width: 260px;
+            max-width: 500px;
+            width: calc(100% - 20px);
+          `}
+        >
+          <Autocomplete
+            disablePortal
             css={css`
-              background-color: var(--paper);
+              height: ${props.height}px;
+              .MuiOutlinedInput-root {
+                border: 1px solid;
+                border-radius: 10px;
+                height: ${props.height}px;
+              }
+              .MuiInputBase-root {
+                font-size: ${props.height / 3}px;
+              }
             `}
+            options={props.kospi200.map((stock) => {
+              return {
+                label: stock.name,
+                id: stock.code,
+              };
+            })}
+            isOptionEqualToValue={(option, value) => {
+              return option.id === value.id;
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="종목"
+                css={css`
+                  font-size: ${props.height}px;
+                  background-color: var(--paper);
+                `}
+              />
+            )}
+            onChange={(e, v) => {
+              if (v) {
+                props.onSelected(v.id);
+              }
+            }}
           />
-        )}
-        onChange={(e, v) => {
-          if (v && v.id) {
-            rootStore.selectedCode = v.id;
-            const useCache = rootStore.cacheData.find((stock) => stock.code === v.id);
-            if (useCache) return;
-            else {
-              rootStore.getNewData(v.id);
-            }
-          }
-        }}
-      />
-    </div>
+        </div>
+      ) : (
+        <Skeleton
+          variant="rectangular"
+          css={css`
+            min-width: 260px;
+            max-width: 500px;
+            width: calc(100% - 20px);
+            height: ${props.height}px;
+            border-radius: 10px;
+          `}
+        />
+      )}
+    </>
   );
 }
-
-export default observer(AutoComplete);

@@ -5,6 +5,7 @@ import { predictAPI } from "./apis";
 export class RootStore {
   selectedCode: string;
   height: number;
+  width: number;
   kospi200: StockData[];
   cacheData: {
     code: string;
@@ -13,9 +14,10 @@ export class RootStore {
   }[];
 
   constructor() {
-    this.selectedCode = "";
+    this.selectedCode = "a";
     this.kospi200 = [];
     this.cacheData = [];
+    this.width = 800;
     this.height = 800;
     makeAutoObservable(this);
   }
@@ -24,28 +26,52 @@ export class RootStore {
       this.height = height;
     });
   };
-  setKospi200 = async () => {
-    const ret = await predictAPI.getKospi200();
+  setWidth = (width: number) => {
     runInAction(() => {
-      this.kospi200 = ret;
+      this.width = width;
     });
   };
+  setKospi200 = async () => {
+    // const ret = await predictAPI.getKospi200();
+    // runInAction(() => {
+    //   this.kospi200 = ret;
+    // });
+  };
   getNewData = async (code: string) => {
-    const ret = await predictAPI.getTimeseriesData(code, 50, 100);
     const stock = this.kospi200.find((stock) => stock.code === code);
-    let newss: NewsData[] = [];
-    if (stock) {
-      newss = await predictAPI.getNews(stock.name);
+
+    if (!stock) {
+      return;
     }
+
+    const newss = await predictAPI.getNews(stock.name);
     runInAction(() => {
       this.cacheData = [
         ...this.cacheData,
         {
           code: code,
-          timeseriesData: ret,
+          timeseriesData: {
+            given: [],
+            predicted: [],
+          },
           newsData: newss,
         },
       ];
+    });
+
+    const ret = await predictAPI.getTimeseriesData(code, 40, 100);
+    runInAction(() => {
+      this.cacheData = this.cacheData.map((data) => {
+        if (data.code === code) {
+          return {
+            code: code,
+            timeseriesData: ret,
+            newsData: newss,
+          };
+        } else {
+          return data;
+        }
+      });
     });
   };
 }

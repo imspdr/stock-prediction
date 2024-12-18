@@ -1,13 +1,27 @@
 import { css } from "@emotion/react";
-import { Circle } from "@mui/icons-material";
-import { GivenData, PredictedData, TimeseriesData } from "@src/store/types";
-import { useState, useEffect, useCallback } from "react";
+import { GivenData, PredictedData } from "@src/store/types";
+import { useState, useEffect } from "react";
+import { Skeleton } from "@mui/material";
 
 export default function TimeseriesChart(props: {
   givenData: GivenData[];
   predictedData: PredictedData[];
-  height?: number;
+  width: number;
+  height: number;
 }) {
+  const width = Math.max(Math.min(1600, props.width), 280);
+  const height = Math.max(Math.min(1000, props.height), 300);
+  const padding = (50 / 1000) * height;
+  const paddingTop = (50 / 1000) * height;
+  const leftPadding = (30 / 1600) * width;
+  const scrollWidth = (5 / 1000) * height;
+  const smallFont = (30 / 1000) * height;
+  const largeFont = (35 / 1000) * height;
+  const rightPadding = smallFont * 5;
+
+  const predictedColor = "var(--highlight)";
+  const givenColor = "var(--chart-gray)";
+
   const [divided, setDivided] = useState(false);
   const [scale, setScale] = useState(1);
 
@@ -43,18 +57,6 @@ export default function TimeseriesChart(props: {
       window.removeEventListener("keydown", keyDownEvent);
     };
   }, [scale]);
-
-  const width = 1600;
-  const height = 1000;
-  const padding = 50;
-  const leftPadding = 30;
-  const rightPadding = 150;
-  const scrollWidth = 5;
-
-  const paddingTop = 50;
-
-  const predictedColor = "var(--highlight)";
-  const givenColor = "var(--chart-gray)";
 
   const hoverTexts = [
     {
@@ -173,440 +175,482 @@ export default function TimeseriesChart(props: {
   ];
   return (
     <>
-      <div
-        css={css`
-          height: ${props.height ? props.height : 400}px;
-          aspect-ratio: 1.6 / 1;
-          background-color: var(--paper);
-          cursor: ${scrolling ? "grabbing" : "grab"};
-          .y-transition {
-            transition: ${transitionOn ? "0.3s ease-in" : "0s"};
-          }
-          border-radius: 10px;
-          border: 1px solid;
-        `}
-      >
-        <svg
-          viewBox={`0 0 ${width} ${height}`}
-          onMouseDown={(e) => {
-            setScrolling(true);
-            setStartX(e.clientX);
-          }}
-          onMouseUp={() => {
-            setScrolling(false);
-          }}
-          onMouseMove={(e) => {
-            if (scrolling && scale > 1) {
-              setNowIndex((v) => {
-                return Math.min(
-                  Math.max(
-                    0,
-                    v + Math.floor(((startX - e.clientX) / window.innerWidth) * scaledLength)
-                  ),
-                  length - scaledLength
-                );
-              });
+      {!(props.givenData.length > 0) ? (
+        <Skeleton
+          variant="rectangular"
+          css={css`
+            width: ${width}px;
+            height: ${height}px;
+            border-radius: 10px;
+          `}
+        />
+      ) : (
+        <div
+          css={css`
+            height: ${height}px;
+            width: ${width}px;
+            background-color: var(--paper);
+            cursor: ${scrolling ? "grabbing" : "grab"};
+            .y-transition {
+              transition: ${transitionOn ? "0.3s ease-in" : "0s"};
             }
-            const svgElement = e.currentTarget;
-            const rect = svgElement.getBoundingClientRect();
-
-            const x = ((e.clientX - rect.left) / rect.width) * width;
-            const y = ((e.clientY - rect.top) / rect.height) * height;
-            setMousePos({
-              x: Math.max(leftPadding, Math.min(x, width - rightPadding)),
-              y: Math.max(padding + paddingTop - 10, Math.min(y, height - padding + 10)),
-            });
-          }}
-          onWheel={(e) => {
-            if (e.deltaY < 0) {
-              setScale((v) => (v >= length / 10 ? v : v * 2));
-            } else {
-              setScale((v) => (v > 1 ? v / 2 : 1));
-            }
-          }}
-          onMouseLeave={() => {
-            setScrolling(false);
-          }}
+            border-radius: 10px;
+            border: 1px solid;
+          `}
         >
-          {/* {grid line} */}
-          {yAxis.map((y) => (
-            <>
-              <path
-                d={`M ${xAxis[0]} ${yScale(y)} L ${xAxis[1]} ${yScale(y)}`}
-                stroke="var(--chart-grid)"
-                strokeWidth={1}
-                className="y-transition"
-              />
-              <text
-                x={width - rightPadding + 25}
-                y={yScale(y) + 10}
-                fontSize={30}
-                fill={"var(--foreground)"}
-                className="y-transition"
-              >
-                {y}
-              </text>
-            </>
-          ))}
-          {divided && (
-            <>
-              {additiveYAxis.map((y) => {
-                return (
-                  <>
-                    <path
-                      d={`M ${xAxis[0]} ${additiveScale(y)} L ${xAxis[1]} ${additiveScale(y)}`}
-                      stroke="var(--chart-grid)"
-                      strokeWidth={1}
-                    />
-                    <text
-                      x={width - rightPadding + 25}
-                      y={additiveScale(y) + 10}
-                      fontSize={30}
-                      fill={"var(--foreground)"}
-                    >
-                      {y}
-                    </text>
-                  </>
-                );
-              })}
-            </>
-          )}
-          {/* main line  */}
-          {datas.map((dataType) => {
-            return (
-              <>
-                {divided ? (
-                  <path
-                    className="y-transition"
-                    d={`${dataType.data
-                      .map((d) =>
-                        d.index === dataType.start
-                          ? `M ${xScale(d.index)} ${trendScale(d.trend_upper)}`
-                          : `L ${xScale(d.index)} ${trendScale(d.trend_upper)}`
-                      )
-                      .join(" ")} ${dataType.data
-                      .slice()
-                      .reverse()
-                      .map((d) => `L ${xScale(d.index)} ${trendScale(d.trend_lower)}`)} Z`}
-                    fill={dataType.color}
-                    opacity="0.3"
-                  />
-                ) : (
-                  <path
-                    className="y-transition"
-                    d={`${dataType.data
-                      .map((d) =>
-                        d.index === dataType.start
-                          ? `M ${xScale(d.index)} ${yScale(d.yhat_upper)}`
-                          : `L ${xScale(d.index)} ${yScale(d.yhat_upper)}`
-                      )
-                      .join(" ")} ${dataType.data
-                      .slice()
-                      .reverse()
-                      .map((d) => `L ${xScale(d.index)} ${yScale(d.yhat_lower)}`)} Z`}
-                    fill={dataType.color}
-                    opacity="0.3"
-                  />
-                )}
-
-                <path
-                  className="y-transition"
-                  d={
-                    divided
-                      ? dataType.data
-                          .map((d) =>
-                            d.index === dataType.start
-                              ? `M ${xScale(d.index)} ${trendScale(d.trend)}`
-                              : `L ${xScale(d.index)} ${trendScale(d.trend)}`
-                          )
-                          .join(" ")
-                      : dataType.data
-                          .map((d) =>
-                            d.index === dataType.start
-                              ? `M ${xScale(d.index)} ${yScale(d.yhat)}`
-                              : `L ${xScale(d.index)} ${yScale(d.yhat)}`
-                          )
-                          .join(" ")
-                  }
-                  fill="none"
-                  stroke={dataType.color}
-                  strokeWidth="3"
-                />
-                <path
-                  className="y-transition"
-                  d={
-                    divided
-                      ? dataType.data
-                          .map((d) =>
-                            d.index === dataType.start
-                              ? `M ${xScale(d.index)} ${additiveScale(d.additive_terms)}`
-                              : `L ${xScale(d.index)} ${additiveScale(d.additive_terms)}`
-                          )
-                          .join(" ")
-                      : dataType.data
-                          .map((d) =>
-                            d.index === dataType.start
-                              ? `M ${xScale(d.index)} ${yScale(d.yhat)}`
-                              : `L ${xScale(d.index)} ${yScale(d.yhat)}`
-                          )
-                          .join(" ")
-                  }
-                  fill="none"
-                  stroke={dataType.color}
-                  strokeWidth="3"
-                />
-              </>
-            );
-          })}
-          {scale > 1 && (
-            <rect
-              x={(nowIndex / length) * width}
-              y={height - scrollWidth}
-              height={scrollWidth}
-              width={width / scale}
-              fill="var(--scroll-color)"
-            />
-          )}
-          {/* givenData chart */}
-          {selectedGivenData.map((data: GivenData, i: number) => {
-            const realIndex = nowIndex + i;
-            return (
-              <>
-                <rect
-                  className="y-transition"
-                  x={
-                    xScale(realIndex) -
-                    ((1 / (scaledLength - 1)) * (width - leftPadding - rightPadding)) / 4
-                  }
-                  y={yScale(Math.max(data.y, data.start))}
-                  height={Math.max(1, Math.abs(yScale(data.start) - yScale(data.y)))}
-                  width={
-                    ((1 / (scaledLength - 1)) * (width - leftPadding - rightPadding)) /
-                    2 /
-                    (xScale(realIndex) >= width - rightPadding - 10 ? 2 : 1)
-                  }
-                  fill={data.start > data.y ? "var(--chart-blue)" : "var(--chart-red)"}
-                />
-                <rect
-                  className="y-transition"
-                  x={xScale(realIndex)}
-                  y={yScale(data.upper)}
-                  height={yScale(data.lower) - yScale(data.upper)}
-                  width={1}
-                  fill={data.start > data.y ? "var(--chart-blue)" : "var(--chart-red)"}
-                />
-              </>
-            );
-          })}
-          {/* hovered text */}
-          {mousePos.x > leftPadding &&
-            mousePos.x < width - rightPadding &&
-            mousePos.y <= height - padding + 1 &&
-            mousePos.y >= padding + paddingTop - 1 &&
-            (function () {
-              const price = !divided
-                ? Math.round(
-                    (1 -
-                      (mousePos.y - padding - paddingTop) / (height - padding * 2 - paddingTop)) *
-                      (maxY - minY) +
-                      minY
-                  )
-                : mousePos.y < paddingTop + (height - paddingTop) / 2 - padding + 10
-                ? Math.round(
-                    (1 -
-                      (mousePos.y - padding - paddingTop) /
-                        ((height - paddingTop) / 2 - padding * 2)) *
-                      (maxTrend - minTrend) +
-                      minTrend
-                  )
-                : mousePos.y < paddingTop + (height - paddingTop) / 2 + padding - 10
-                ? undefined
-                : Math.round(
-                    ((((height - paddingTop) * 3) / 4 + paddingTop - mousePos.y) /
-                      ((height - paddingTop) / 4 - padding)) *
-                      maxAbsAdditive
+          <svg
+            viewBox={`0 0 ${width} ${height}`}
+            onMouseDown={(e) => {
+              setScrolling(true);
+              setStartX(e.clientX);
+            }}
+            onMouseUp={() => {
+              setScrolling(false);
+            }}
+            onMouseMove={(e) => {
+              if (scrolling && scale > 1) {
+                setNowIndex((v) => {
+                  return Math.min(
+                    Math.max(
+                      0,
+                      v + Math.floor(((startX - e.clientX) / window.innerWidth) * scaledLength)
+                    ),
+                    length - scaledLength
                   );
-              const y = divided ? Math.min(mousePos.y) : mousePos.y;
-              const idx = Math.floor(
-                ((mousePos.x - leftPadding) / (width - leftPadding - rightPadding)) * scaledLength
-              );
-              const x =
-                leftPadding + (idx * (width - leftPadding - rightPadding)) / (scaledLength - 1);
-              const drawBox =
-                selectedGivenData[idx] &&
-                price &&
-                price >= selectedGivenData[idx]?.lower &&
-                price <= selectedGivenData[idx]?.upper;
-              const drawBoxHeight = 220;
-              const drawBoxWidth = 250;
-              const priceBoxHeight = 40;
-              return (
-                <>
-                  {(price == 0 || !!price) && (
+                });
+              }
+              const svgElement = e.currentTarget;
+              const rect = svgElement.getBoundingClientRect();
+
+              const x = ((e.clientX - rect.left) / rect.width) * width;
+              const y = ((e.clientY - rect.top) / rect.height) * height;
+              setMousePos({
+                x: Math.max(leftPadding, Math.min(x, width - rightPadding)),
+                y: Math.max(padding + paddingTop - 10, Math.min(y, height - padding + 10)),
+              });
+            }}
+            onTouchStart={(e) => {
+              if (e.touches[0]) {
+                setScrolling(true);
+                setStartX(e.touches[0].clientX);
+              }
+            }}
+            onTouchMove={(ev) => {
+              const e = ev.touches[0];
+              if (scrolling && scale > 1 && e) {
+                setNowIndex((v) => {
+                  return Math.min(
+                    Math.max(
+                      0,
+                      v + Math.floor(((startX - e.clientX) / window.innerWidth) * scaledLength)
+                    ),
+                    length - scaledLength
+                  );
+                });
+              }
+            }}
+            onTouchEnd={() => {
+              setScrolling(false);
+            }}
+            onWheel={(e) => {
+              if (e.deltaY < 0) {
+                setScale((v) => (v >= length / 10 ? v : v * 2));
+              } else {
+                setScale((v) => (v > 1 ? v / 2 : 1));
+              }
+            }}
+            onMouseLeave={() => {
+              setScrolling(false);
+            }}
+          >
+            {/* {grid line} */}
+            {yAxis.map((y) => (
+              <>
+                <path
+                  d={`M ${xAxis[0]} ${yScale(y)} L ${xAxis[1]} ${yScale(y)}`}
+                  stroke="var(--chart-grid)"
+                  strokeWidth={1}
+                  className="y-transition"
+                />
+                <text
+                  x={width - rightPadding + smallFont - 5}
+                  y={yScale(y) + 10}
+                  fontSize={smallFont}
+                  fill={"var(--foreground)"}
+                  className="y-transition"
+                >
+                  {y}
+                </text>
+              </>
+            ))}
+            {divided && (
+              <>
+                {additiveYAxis.map((y) => {
+                  return (
                     <>
                       <path
-                        d={`M ${xAxis[0]} ${y} L ${xAxis[1]} ${y}`}
+                        d={`M ${xAxis[0]} ${additiveScale(y)} L ${xAxis[1]} ${additiveScale(y)}`}
                         stroke="var(--chart-grid)"
-                        strokeWidth={3}
-                        className="y-transition"
-                      />
-                      <rect
-                        x={width - rightPadding}
-                        y={y + 5 - priceBoxHeight / 2}
-                        fill={"var(--foreground)"}
-                        width={rightPadding - 5}
-                        height={priceBoxHeight}
-                        rx={10}
-                        ry={10}
+                        strokeWidth={1}
                       />
                       <text
-                        x={width - rightPadding + 20}
-                        y={y + 15}
-                        fontSize={35}
-                        fill={"var(--paper)"}
-                        className="y-transition"
+                        x={width - rightPadding + smallFont - 5}
+                        y={additiveScale(y) + 10}
+                        fontSize={smallFont}
+                        fill={"var(--foreground)"}
                       >
-                        {price}
+                        {y}
                       </text>
                     </>
-                  )}
-                  <path
-                    d={`M ${x} ${padding + paddingTop} L ${x} ${height - padding}`}
-                    stroke="var(--chart-grid)"
-                    strokeWidth={3}
-                    className="y-transition"
-                  />
-                  <rect
-                    x={Math.max(0, x - 90)}
-                    y={height - padding + 25 - priceBoxHeight / 2}
-                    fill={"var(--foreground)"}
-                    width={180}
-                    height={priceBoxHeight}
-                    rx={10}
-                    ry={10}
-                  />
-                  <text
-                    x={Math.max(0, x - 90) + 10}
-                    y={height - padding + 35}
-                    fontSize={35}
-                    fill={"var(--paper)"}
-                    className="y-transition"
-                  >
-                    {nowIndex + idx < props.givenData.length
-                      ? selectedGivenData[idx]?.ds
-                      : nowIndex + idx}
-                  </text>
-                  {drawBox && (
-                    <>
-                      <rect
-                        y={y > height / 2 ? y - drawBoxHeight : y}
-                        x={x > width / 2 ? x - drawBoxWidth : x}
-                        width={drawBoxWidth}
-                        height={drawBoxHeight}
-                        fill={"var(--paper)"}
-                      />
-                      {hoverTexts.map((item, index) => {
-                        return (
-                          <text
-                            y={(y > height / 2 ? y - drawBoxHeight : y) + (index + 1) * 40}
-                            x={(x > width / 2 ? x - drawBoxWidth : x) + 10}
-                            fontSize={30}
-                            fill={"var(--foreground)"}
-                          >
-                            {`${item.label} - ${
-                              selectedGivenData[idx]![item.value as keyof GivenData]
-                            }`}
-                          </text>
-                        );
-                      })}
-                    </>
-                  )}
-                  {idx < props.predictedData.length ? (
-                    <>
-                      {topperTexts.map((item, index) => {
-                        return (
-                          !!props.predictedData[nowIndex + idx] && (
-                            <text
-                              y={paddingTop}
-                              x={leftPadding + index * 210}
-                              fontSize={30}
-                              fill={"var(--foreground)"}
-                            >
-                              {`${item.label} ${
-                                props.predictedData[nowIndex + idx]![
-                                  item.value as keyof PredictedData
-                                ]
-                              }`}
-                            </text>
-                          )
-                        );
-                      })}
-                    </>
+                  );
+                })}
+              </>
+            )}
+            {/* main line  */}
+            {datas.map((dataType) => {
+              return (
+                <>
+                  {divided ? (
+                    <path
+                      className="y-transition"
+                      d={`${dataType.data
+                        .map((d) =>
+                          d.index === dataType.start
+                            ? `M ${xScale(d.index)} ${trendScale(d.trend_upper)}`
+                            : `L ${xScale(d.index)} ${trendScale(d.trend_upper)}`
+                        )
+                        .join(" ")} ${dataType.data
+                        .slice()
+                        .reverse()
+                        .map((d) => `L ${xScale(d.index)} ${trendScale(d.trend_lower)}`)} Z`}
+                      fill={dataType.color}
+                      opacity="0.3"
+                    />
                   ) : (
-                    <></>
+                    <path
+                      className="y-transition"
+                      d={`${dataType.data
+                        .map((d) =>
+                          d.index === dataType.start
+                            ? `M ${xScale(d.index)} ${yScale(d.yhat_upper)}`
+                            : `L ${xScale(d.index)} ${yScale(d.yhat_upper)}`
+                        )
+                        .join(" ")} ${dataType.data
+                        .slice()
+                        .reverse()
+                        .map((d) => `L ${xScale(d.index)} ${yScale(d.yhat_lower)}`)} Z`}
+                      fill={dataType.color}
+                      opacity="0.3"
+                    />
                   )}
+
+                  <path
+                    className="y-transition"
+                    d={
+                      divided
+                        ? dataType.data
+                            .map((d) =>
+                              d.index === dataType.start
+                                ? `M ${xScale(d.index)} ${trendScale(d.trend)}`
+                                : `L ${xScale(d.index)} ${trendScale(d.trend)}`
+                            )
+                            .join(" ")
+                        : dataType.data
+                            .map((d) =>
+                              d.index === dataType.start
+                                ? `M ${xScale(d.index)} ${yScale(d.yhat)}`
+                                : `L ${xScale(d.index)} ${yScale(d.yhat)}`
+                            )
+                            .join(" ")
+                    }
+                    fill="none"
+                    stroke={dataType.color}
+                    strokeWidth="3"
+                  />
+                  <path
+                    className="y-transition"
+                    d={
+                      divided
+                        ? dataType.data
+                            .map((d) =>
+                              d.index === dataType.start
+                                ? `M ${xScale(d.index)} ${additiveScale(d.additive_terms)}`
+                                : `L ${xScale(d.index)} ${additiveScale(d.additive_terms)}`
+                            )
+                            .join(" ")
+                        : dataType.data
+                            .map((d) =>
+                              d.index === dataType.start
+                                ? `M ${xScale(d.index)} ${yScale(d.yhat)}`
+                                : `L ${xScale(d.index)} ${yScale(d.yhat)}`
+                            )
+                            .join(" ")
+                    }
+                    fill="none"
+                    stroke={dataType.color}
+                    strokeWidth="3"
+                  />
                 </>
               );
-            })()}{" "}
-          {/* {top side buttons} */}
-          {
-            <>
+            })}
+            {scale > 1 && (
               <rect
-                x={width - rightPadding - 120}
-                y={paddingTop - 40}
-                height={60}
-                width={120}
-                rx={30}
-                ry={30}
-                fill="var(--highlight)"
-              ></rect>
-              <text
-                x={width - rightPadding - 100}
-                y={paddingTop}
-                fontSize={30}
-                fill={"var(--foreground)"}
-                onClick={() => {
-                  setTransitionOn(true);
-                  setDivided((v) => !v);
-                }}
-              >
-                {divided ? "합치기" : "펼치기"}
-              </text>
-              <text
-                x={width - rightPadding + 25}
-                y={paddingTop}
-                fontSize={40}
-                fill={"var(--foreground)"}
-                onClick={() => {
-                  setScale((v) => (v > 1 ? v / 2 : 1));
-                }}
-              >
-                {"-"}
-              </text>
-              <text
-                x={width - rightPadding + 75}
-                y={paddingTop}
-                fontSize={40}
-                fill={"var(--foreground)"}
-                text-anchor="middle"
-              >
-                {scale}
-              </text>
-              <text
-                x={width - rightPadding + 105}
-                y={paddingTop + 3}
-                fontSize={40}
-                fill={"var(--foreground)"}
-                onClick={() => {
-                  setScale((v) => (v >= length / 10 ? v : v * 2));
-                }}
-              >
-                {"+"}
-              </text>
-            </>
-          }
-        </svg>
-      </div>
+                x={(nowIndex / length) * width}
+                y={height - scrollWidth}
+                height={scrollWidth}
+                width={width / scale}
+                fill="var(--scroll-color)"
+              />
+            )}
+            {/* givenData chart */}
+            {selectedGivenData.map((data: GivenData, i: number) => {
+              const realIndex = nowIndex + i;
+              return (
+                <>
+                  <rect
+                    className="y-transition"
+                    x={
+                      xScale(realIndex) -
+                      ((1 / (scaledLength - 1)) * (width - leftPadding - rightPadding)) / 4
+                    }
+                    y={yScale(Math.max(data.y, data.start))}
+                    height={Math.max(1, Math.abs(yScale(data.start) - yScale(data.y)))}
+                    width={
+                      ((1 / (scaledLength - 1)) * (width - leftPadding - rightPadding)) /
+                      2 /
+                      (xScale(realIndex) >= width - rightPadding - 10 ? 2 : 1)
+                    }
+                    fill={data.start > data.y ? "var(--chart-blue)" : "var(--chart-red)"}
+                  />
+                  <rect
+                    className="y-transition"
+                    x={xScale(realIndex)}
+                    y={yScale(data.upper)}
+                    height={yScale(data.lower) - yScale(data.upper)}
+                    width={1}
+                    fill={data.start > data.y ? "var(--chart-blue)" : "var(--chart-red)"}
+                  />
+                </>
+              );
+            })}
+            {/* hovered text */}
+            {mousePos.x > leftPadding &&
+              mousePos.x < width - rightPadding &&
+              mousePos.y <= height - padding + 1 &&
+              mousePos.y >= padding + paddingTop - 1 &&
+              (function () {
+                const price = !divided
+                  ? Math.round(
+                      (1 -
+                        (mousePos.y - padding - paddingTop) / (height - padding * 2 - paddingTop)) *
+                        (maxY - minY) +
+                        minY
+                    )
+                  : mousePos.y < paddingTop + (height - paddingTop) / 2 - padding + 10
+                  ? Math.round(
+                      (1 -
+                        (mousePos.y - padding - paddingTop) /
+                          ((height - paddingTop) / 2 - padding * 2)) *
+                        (maxTrend - minTrend) +
+                        minTrend
+                    )
+                  : mousePos.y < paddingTop + (height - paddingTop) / 2 + padding - 10
+                  ? undefined
+                  : Math.round(
+                      ((((height - paddingTop) * 3) / 4 + paddingTop - mousePos.y) /
+                        ((height - paddingTop) / 4 - padding)) *
+                        maxAbsAdditive
+                    );
+                const y = divided ? Math.min(mousePos.y) : mousePos.y;
+                const idx = Math.floor(
+                  ((mousePos.x - leftPadding) / (width - leftPadding - rightPadding)) * scaledLength
+                );
+                const x =
+                  leftPadding + (idx * (width - leftPadding - rightPadding)) / (scaledLength - 1);
+                const drawBox =
+                  selectedGivenData[idx] &&
+                  price &&
+                  price >= selectedGivenData[idx]?.lower &&
+                  price <= selectedGivenData[idx]?.upper;
+                const drawBoxHeight = smallFont * 7;
+                const drawBoxWidth = smallFont * 8;
+                const priceBoxHeight = largeFont * 1.1;
+                return (
+                  <>
+                    {(price == 0 || !!price) && (
+                      <>
+                        <path
+                          d={`M ${xAxis[0]} ${y} L ${xAxis[1]} ${y}`}
+                          stroke="var(--chart-grid)"
+                          strokeWidth={3}
+                          className="y-transition"
+                        />
+                        <rect
+                          x={width - rightPadding}
+                          y={y - priceBoxHeight / 2}
+                          fill={"var(--foreground)"}
+                          width={rightPadding}
+                          height={priceBoxHeight}
+                          rx={largeFont / 4}
+                          ry={largeFont / 4}
+                        />
+                        <text
+                          x={width - rightPadding / 2}
+                          y={y + priceBoxHeight / 2 - largeFont / 5}
+                          fontSize={largeFont}
+                          fill={"var(--paper)"}
+                          className="y-transition"
+                          text-anchor="middle"
+                        >
+                          {price}
+                        </text>
+                      </>
+                    )}
+                    <path
+                      d={`M ${x} ${padding + paddingTop} L ${x} ${height - padding}`}
+                      stroke="var(--chart-grid)"
+                      strokeWidth={3}
+                      className="y-transition"
+                    />
+                    <rect
+                      x={Math.max(0, x - rightPadding * 0.6)}
+                      y={height - padding / 2 - priceBoxHeight / 2}
+                      fill={"var(--foreground)"}
+                      width={rightPadding * 1.2}
+                      height={priceBoxHeight}
+                      rx={10}
+                      ry={10}
+                    />
+                    <text
+                      x={Math.max(rightPadding * 0.6, x)}
+                      y={height - padding / 2 + priceBoxHeight / 5}
+                      fontSize={largeFont}
+                      fill={"var(--paper)"}
+                      className="y-transition"
+                      text-anchor="middle"
+                    >
+                      {nowIndex + idx < props.givenData.length
+                        ? selectedGivenData[idx]?.ds
+                        : nowIndex + idx}
+                    </text>
+                    {drawBox && (
+                      <>
+                        <rect
+                          y={y > height / 2 ? y - drawBoxHeight : y}
+                          x={x > width / 2 ? x - drawBoxWidth : x}
+                          width={drawBoxWidth}
+                          height={drawBoxHeight}
+                          fill={"var(--paper)"}
+                        />
+                        {hoverTexts.map((item, index) => {
+                          return (
+                            <text
+                              y={
+                                (y > height / 2 ? y - drawBoxHeight : y) +
+                                (index + 1) * (smallFont * 1.2)
+                              }
+                              x={(x > width / 2 ? x - drawBoxWidth : x) + smallFont / 3}
+                              fontSize={smallFont}
+                              fill={"var(--foreground)"}
+                            >
+                              {`${item.label} - ${
+                                selectedGivenData[idx]![item.value as keyof GivenData]
+                              }`}
+                            </text>
+                          );
+                        })}
+                      </>
+                    )}
+                    {idx < props.predictedData.length &&
+                    width > rightPadding * 2 + smallFont * 22 + leftPadding ? (
+                      <>
+                        {topperTexts.map((item, index) => {
+                          return (
+                            !!props.predictedData[nowIndex + idx] && (
+                              <text
+                                y={paddingTop}
+                                x={leftPadding + index * smallFont * 7}
+                                fontSize={smallFont}
+                                fill={"var(--foreground)"}
+                              >
+                                {`${item.label} ${
+                                  props.predictedData[nowIndex + idx]![
+                                    item.value as keyof PredictedData
+                                  ]
+                                }`}
+                              </text>
+                            )
+                          );
+                        })}
+                      </>
+                    ) : (
+                      <></>
+                    )}
+                  </>
+                );
+              })()}{" "}
+            {/* {top side buttons} */}
+            {
+              <>
+                <rect
+                  x={width - rightPadding * 2}
+                  y={paddingTop - smallFont}
+                  height={paddingTop}
+                  width={rightPadding}
+                  rx={paddingTop / 2}
+                  ry={paddingTop / 2}
+                  fill="var(--highlight)"
+                ></rect>
+                <text
+                  x={width - rightPadding * 2 + smallFont + 2}
+                  y={paddingTop + 2}
+                  fontSize={smallFont}
+                  fill={"var(--foreground)"}
+                  onClick={() => {
+                    setTransitionOn(true);
+                    setDivided((v) => !v);
+                  }}
+                >
+                  {divided ? "합치기" : "펼치기"}
+                </text>
+                <text
+                  x={width - rightPadding + smallFont * 1}
+                  y={paddingTop}
+                  fontSize={smallFont}
+                  fill={"var(--foreground)"}
+                  text-anchor="middle"
+                  onClick={() => {
+                    setScale((v) => (v > 1 ? v / 2 : 1));
+                  }}
+                >
+                  {"<"}
+                </text>
+                <text
+                  x={width - rightPadding + smallFont * 2.5}
+                  y={paddingTop}
+                  fontSize={smallFont}
+                  fill={"var(--foreground)"}
+                  text-anchor="middle"
+                >
+                  {`x${scale}`}
+                </text>
+                <text
+                  x={width - rightPadding + smallFont * 4}
+                  y={paddingTop}
+                  fontSize={smallFont}
+                  fill={"var(--foreground)"}
+                  text-anchor="middle"
+                  onClick={() => {
+                    setScale((v) => (v >= length / 10 ? v : v * 2));
+                  }}
+                >
+                  {">"}
+                </text>
+              </>
+            }
+          </svg>
+        </div>
+      )}
     </>
   );
 }

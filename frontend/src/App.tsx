@@ -6,7 +6,7 @@ import { StyledEngineProvider, Typography } from "@mui/material";
 import { css } from "@emotion/react";
 import { unselectable } from "@src/util";
 import ThemeToggle from "@src/components/ThemeToggle";
-import MainPage from "./components/MainPage";
+import MainPage from "./MainPage";
 
 const lightTheme = createTheme({
   palette: {
@@ -25,6 +25,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const resize = () => {
     rootStore.setHeight(window.innerHeight);
+    rootStore.setWidth(window.innerWidth);
   };
   useEffect(() => {
     resize();
@@ -100,8 +101,7 @@ function App() {
             align-items: center;
             justify-content: space-between;
             height: 48px;
-
-            min-width: 300px;
+            width: calc(100% - 20px);
             padding: 0px 10px;
             ${unselectable}
           `}

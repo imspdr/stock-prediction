@@ -1,11 +1,10 @@
 import { css, keyframes } from "@emotion/react";
 import { observer } from "mobx-react";
 import { NewsData } from "@src/store/types";
-import { Typography } from "@mui/material";
+import { Typography, Skeleton } from "@mui/material";
 import { useState, useEffect } from "react";
 
-function NewsAnimation(props: { newsData: NewsData[]; width?: number }) {
-  const [hover, setHover] = useState(false);
+function NewsAnimation(props: { newsData: NewsData[]; height: number }) {
   const [nowIndex, setNowIndex] = useState(0);
   const divideLength = props.newsData.length;
   useEffect(() => {
@@ -17,70 +16,91 @@ function NewsAnimation(props: { newsData: NewsData[]; width?: number }) {
     };
   }, []);
   return (
-    <div
-      css={css`
-        position: relative;
-        height: 48px;
-        border-radius: 10px;
-        background-color: var(--paper);
-        border: 1px solid;
-        padding: 0px 20px;
-        width: ${(props.width ? props.width : 800) - 40}px;
-        ${!hover && "overflow: hidden;"}
-      `}
-    >
-      {props.newsData.map((news, i) => {
-        return (
-          <Typography
-            onClick={() => {
-              window.open(news.link, "_blank", "noopener,noreferrer");
-            }}
-            css={css`
-              white-space: nowrap;
-              overflow: hidden;
-              textp-overflow: ellipsis;
-              position: absolute;
-              top: ${10 +
-              (nowIndex % divideLength === i
-                ? 0
-                : nowIndex % divideLength === (i + 1) % divideLength
-                ? -1
-                : 1) *
-                50}px;
-              animation: ${keyframes`
-                from {
-                  top: ${
-                    10 +
-                    (nowIndex % divideLength === i
-                      ? 1
-                      : nowIndex % divideLength === (i + 1) % divideLength
-                      ? 0
-                      : -1) *
-                      50
-                  }px;
-                }
-                to {
-                  top: ${
-                    10 +
-                    (nowIndex % divideLength === i
-                      ? 0
-                      : nowIndex % divideLength === (i + 1) % divideLength
-                      ? -1
-                      : 1) *
-                      50
-                  }px;
-                }`} 1s;
-              opacity: ${i == nowIndex % divideLength || i == (nowIndex - 1) % divideLength
-                ? 1
-                : 0};
-            `}
-            variant="h6"
-          >
-            {news.title}
-          </Typography>
-        );
-      })}
-    </div>
+    <>
+      {props.newsData.length > 0 ? (
+        <div
+          css={css`
+            position: relative;
+            border-radius: 10px;
+            background-color: var(--background);
+            padding: 0px 20px;
+            min-width: 240px;
+            max-width: 1000px;
+            width: calc(100% - 40px);
+            height: ${props.height}px;
+            overflow: hidden;
+          `}
+        >
+          {props.newsData.map((news, i) => {
+            return (
+              <Typography
+                onClick={() => {
+                  window.open(news.link, "_blank", "noopener,noreferrer");
+                }}
+                css={css`
+                  white-space: nowrap;
+                  overflow: hidden;
+                  width: calc(100% - 40px);
+                  textp-overflow: ellipsis;
+                  position: absolute;
+                  font-size: ${props.height / 2}px;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  top: ${(nowIndex % divideLength === i
+                    ? 0
+                    : nowIndex % divideLength === (i + 1) % divideLength
+                    ? -1
+                    : 1) *
+                    props.height +
+                  5}px;
+                  animation: ${keyframes`
+              from {
+                top: ${
+                  (nowIndex % divideLength === i
+                    ? 1
+                    : nowIndex % divideLength === (i + 1) % divideLength
+                    ? 0
+                    : -1) *
+                    props.height +
+                  5
+                }px;
+              }
+              to {
+                top: ${
+                  (nowIndex % divideLength === i
+                    ? 0
+                    : nowIndex % divideLength === (i + 1) % divideLength
+                    ? -1
+                    : 1) *
+                    props.height +
+                  5
+                }px;
+              }`} 1s;
+                  opacity: ${i == nowIndex % divideLength || i == (nowIndex - 1) % divideLength
+                    ? 1
+                    : 0};
+                `}
+                variant="h6"
+              >
+                {news.title}
+              </Typography>
+            );
+          })}
+        </div>
+      ) : (
+        <Skeleton
+          variant="rectangular"
+          css={css`
+            min-width: 280px;
+            max-width: 1000px;
+            width: calc(100% - 10px);
+            height: ${props.height}px;
+            border-radius: 10px;
+          `}
+        />
+      )}
+    </>
   );
 }
 
