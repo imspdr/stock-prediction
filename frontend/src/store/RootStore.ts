@@ -4,6 +4,7 @@ import { predictAPI } from "./apis";
 
 export class RootStore {
   selectedCode: string;
+  height: number;
   kospi200: StockData[];
   cacheData: {
     code: string;
@@ -15,8 +16,14 @@ export class RootStore {
     this.selectedCode = "";
     this.kospi200 = [];
     this.cacheData = [];
+    this.height = 800;
     makeAutoObservable(this);
   }
+  setHeight = (height: number) => {
+    runInAction(() => {
+      this.height = height;
+    });
+  };
   setKospi200 = async () => {
     const ret = await predictAPI.getKospi200();
     runInAction(() => {

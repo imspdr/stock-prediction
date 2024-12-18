@@ -8,6 +8,8 @@ import { Skeleton } from "@mui/material";
 
 function MainPage() {
   const rootStore = useRootStore();
+  const chartHeight = rootStore.height - 48 - 48 - 48 - 80;
+  const width = chartHeight * 1.6;
   const selectedStock = rootStore.cacheData.find((cache) => cache.code === rootStore.selectedCode);
   return (
     <div
@@ -25,17 +27,17 @@ function MainPage() {
         <Skeleton
           variant="rectangular"
           css={css`
-            width: 80%;
             max-width: 500px;
             min-width: 280px;
-            height: 58px;
+            width: 80%;
+            height: 48px;
             border-radius: 10px;
           `}
         />
       )}
       {selectedStock ? (
         <>
-          <NewsAnimation newsData={selectedStock.newsData} />
+          <NewsAnimation newsData={selectedStock.newsData} width={width} />
           <TimeseriesChart
             givenData={selectedStock.timeseriesData.given.filter((data, index) => {
               return (
@@ -46,6 +48,7 @@ function MainPage() {
               );
             })}
             predictedData={selectedStock.timeseriesData.predicted}
+            height={chartHeight}
           />
         </>
       ) : rootStore.selectedCode ? (
@@ -53,20 +56,16 @@ function MainPage() {
           <Skeleton
             variant="rectangular"
             css={css`
-              width: calc(100%);
-              height: 52px;
-              max-width: 1000px;
-              min-width: 280px;
+              width: ${width}px;
+              height: 48px;
               border-radius: 10px;
             `}
           />
           <Skeleton
             variant="rectangular"
             css={css`
-              width: calc(100%);
-              height: 300px;
-              max-width: 1000px;
-              min-width: 280px;
+              width: ${width}px;
+              height: ${chartHeight}px;
               border-radius: 10px;
             `}
           />

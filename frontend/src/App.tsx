@@ -23,6 +23,16 @@ const darkTheme = createTheme({
 function App() {
   const rootStore = useRootStore();
   const [darkMode, setDarkMode] = useState(false);
+  const resize = () => {
+    rootStore.setHeight(window.innerHeight);
+  };
+  useEffect(() => {
+    resize();
+    addEventListener("resize", resize);
+    return () => {
+      removeEventListener("resize", resize);
+    };
+  }, []);
 
   useEffect(() => {
     rootStore.setKospi200();
@@ -104,7 +114,7 @@ function App() {
             position: absolute;
             top: 48px;
             width: 100%;
-            height: calc(100vh - 48px);
+            height: calc(${rootStore.height} - 48px);
             ${unselectable}
           `}
         >

@@ -20,6 +20,7 @@ function AutoComplete() {
           .MuiOutlinedInput-root {
             border: 1px solid;
             border-radius: 10px;
+            height: 48px;
           }
         `}
         options={rootStore.kospi200.map((stock) => {

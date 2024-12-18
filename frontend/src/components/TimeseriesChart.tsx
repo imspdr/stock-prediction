@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 export default function TimeseriesChart(props: {
   givenData: GivenData[];
   predictedData: PredictedData[];
+  height?: number;
 }) {
   const [divided, setDivided] = useState(false);
   const [scale, setScale] = useState(1);
@@ -174,9 +175,8 @@ export default function TimeseriesChart(props: {
     <>
       <div
         css={css`
-          width: calc(100% - 2px);
-          max-width: 998px;
-          min-width: 278px;
+          height: ${props.height ? props.height : 400}px;
+          aspect-ratio: 1.6 / 1;
           background-color: var(--paper);
           cursor: ${scrolling ? "grabbing" : "grab"};
           .y-transition {

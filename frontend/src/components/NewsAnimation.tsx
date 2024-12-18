@@ -4,7 +4,7 @@ import { NewsData } from "@src/store/types";
 import { Typography } from "@mui/material";
 import { useState, useEffect } from "react";
 
-function NewsAnimation(props: { newsData: NewsData[] }) {
+function NewsAnimation(props: { newsData: NewsData[]; width?: number }) {
   const [hover, setHover] = useState(false);
   const [nowIndex, setNowIndex] = useState(0);
   const divideLength = props.newsData.length;
@@ -20,14 +20,12 @@ function NewsAnimation(props: { newsData: NewsData[] }) {
     <div
       css={css`
         position: relative;
-        max-width: 958px;
-        min-width: 238px;
-        height: 52px;
+        height: 48px;
         border-radius: 10px;
         background-color: var(--paper);
         border: 1px solid;
         padding: 0px 20px;
-        width: calc(100% - 42px);
+        width: ${(props.width ? props.width : 800) - 40}px;
         ${!hover && "overflow: hidden;"}
       `}
     >
