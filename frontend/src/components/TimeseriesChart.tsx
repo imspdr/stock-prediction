@@ -211,7 +211,11 @@ export default function TimeseriesChart(props: {
                   return Math.min(
                     Math.max(
                       0,
-                      v + Math.floor(((startX.current - e.clientX) / width) * scaledLength)
+                      v +
+                        Math.floor(
+                          ((startX.current - e.clientX) / (width - leftPadding - rightPadding)) *
+                            scaledLength
+                        )
                     ),
                     length - scaledLength
                   );
@@ -648,7 +652,7 @@ export default function TimeseriesChart(props: {
                   fill={"var(--foreground)"}
                   text-anchor="middle"
                 >
-                  {`x${scale.toFixed(1)}`}
+                  {`x${scale.toFixed(0)}`}
                 </text>
                 <text
                   x={width - rightPadding + smallFont * 4}
