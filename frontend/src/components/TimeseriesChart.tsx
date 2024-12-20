@@ -235,21 +235,20 @@ export default function TimeseriesChart(props: {
             }}
             onTouchMove={(ev) => {
               const t1 = ev.touches[0];
-              const t2 = ev.touches[1];
-              if (t1 && t2) {
-                const distance = Math.sqrt(
-                  Math.pow(t1.clientX - t2.clientX, 2) + Math.pow(t1.clientY - t2.clientY, 2)
-                );
-                if (scaleDistance.current !== null) {
-                  const delta = distance - scaleDistance.current;
-                  if (Math.abs(delta) > 2) {
-                    setScale((v) =>
-                      Math.max(1, Math.min(maxScale, v + Math.round(v + delta * 0.005)))
-                    );
-                  }
-                }
-                scaleDistance.current = distance;
-              } else if (scrolling.current && scale > 1 && t1) {
+              // const t2 = ev.touches[1];
+              // if (t1 && t2) {
+              //   const distance = Math.sqrt(
+              //     Math.pow(t1.clientX - t2.clientX, 2) + Math.pow(t1.clientY - t2.clientY, 2)
+              //   );
+              //   if (scaleDistance.current !== null) {
+              //     const delta = distance - scaleDistance.current;
+              //     setScale((v) =>
+              //       Math.max(1, Math.min(maxScale, v + Math.round(v + delta * 0.005)))
+              //     );
+              //   }
+              //   scaleDistance.current = distance;
+              // } else
+              if (scrolling.current && scale > 1 && t1) {
                 setNowIndex((v) => {
                   return Math.min(
                     Math.max(
