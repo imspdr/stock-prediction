@@ -1,6 +1,6 @@
 import { css } from "@emotion/react";
 import { GivenData, PredictedData } from "@src/store/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Skeleton } from "@mui/material";
 
 export default function TimeseriesChart(props: {
@@ -24,23 +24,20 @@ export default function TimeseriesChart(props: {
 
   const [divided, setDivided] = useState(false);
   const [scale, setScale] = useState(1);
-
   const [nowIndex, setNowIndex] = useState(0);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  const [transitionOn, setTransitionOn] = useState(false);
-  const [scrolling, setScrolling] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [mousePos, setMousePos] = useState({
-    x: 0,
-    y: 0,
-  });
+  const transitionOn = useRef<boolean | null>(null);
+  const scrolling = useRef<boolean | null>(null);
+  const startX = useRef<number>(0);
+  const scaleDistance = useRef<number | null>(null);
 
   useEffect(() => {
     setNowIndex((v) => Math.min(length - scaledLength, v));
   }, [scale]);
 
   useEffect(() => {
-    setTransitionOn(false);
+    transitionOn.current = false;
   }, [divided]);
 
   // add key down scroll effect
@@ -190,9 +187,9 @@ export default function TimeseriesChart(props: {
             height: ${height}px;
             width: ${width}px;
             background-color: var(--paper);
-            cursor: ${scrolling ? "grabbing" : "grab"};
+            cursor: ${scrolling.current ? "grabbing" : "grab"};
             .y-transition {
-              transition: ${transitionOn ? "0.3s ease-in" : "0s"};
+              transition: ${transitionOn.current ? "0.3s ease-in" : "0s"};
             }
             border-radius: 10px;
             border: 1px solid;
@@ -201,19 +198,22 @@ export default function TimeseriesChart(props: {
           <svg
             viewBox={`0 0 ${width} ${height}`}
             onMouseDown={(e) => {
-              setScrolling(true);
-              setStartX(e.clientX);
+              scrolling.current = true;
+              startX.current = e.clientX;
             }}
             onMouseUp={() => {
-              setScrolling(false);
+              scrolling.current = false;
             }}
             onMouseMove={(e) => {
-              if (scrolling && scale > 1) {
+              if (scrolling.current && scale > 1) {
                 setNowIndex((v) => {
                   return Math.min(
                     Math.max(
                       0,
-                      v + Math.floor(((startX - e.clientX) / window.innerWidth) * scaledLength)
+                      v +
+                        Math.floor(
+                          ((startX.current - e.clientX) / window.innerWidth) * scaledLength
+                        )
                     ),
                     length - scaledLength
                   );
@@ -231,18 +231,34 @@ export default function TimeseriesChart(props: {
             }}
             onTouchStart={(e) => {
               if (e.touches[0]) {
-                setScrolling(true);
-                setStartX(e.touches[0].clientX);
+                scrolling.current = true;
+                startX.current = e.touches[0].clientX;
               }
             }}
             onTouchMove={(ev) => {
-              const e = ev.touches[0];
-              if (scrolling && scale > 1 && e) {
+              const t1 = ev.touches[0];
+              const t2 = ev.touches[1];
+              if (t1 && t2) {
+                const distance = Math.sqrt(
+                  Math.pow(t1.clientX - t2.clientX, 2) + Math.pow(t1.clientY - t2.clientY, 2)
+                );
+                if (scaleDistance !== null) {
+                  if (distance > scaleDistance.current!) {
+                    setScale((v) => (v >= length / 10 ? v : Math.round(v * 2)));
+                  } else {
+                    setScale((v) => (v > 1 ? v / 2 : 1));
+                  }
+                }
+                scaleDistance.current = distance;
+              } else if (scrolling.current && scale > 1 && t1) {
                 setNowIndex((v) => {
                   return Math.min(
                     Math.max(
                       0,
-                      v + Math.floor(((startX - e.clientX) / window.innerWidth) * scaledLength)
+                      v +
+                        Math.floor(
+                          ((startX.current - t1.clientX) / window.innerWidth) * scaledLength
+                        )
                     ),
                     length - scaledLength
                   );
@@ -250,17 +266,18 @@ export default function TimeseriesChart(props: {
               }
             }}
             onTouchEnd={() => {
-              setScrolling(false);
+              scrolling.current = false;
+              scaleDistance.current = null;
             }}
             onWheel={(e) => {
               if (e.deltaY < 0) {
-                setScale((v) => (v >= length / 10 ? v : v * 2));
+                setScale((v) => (v >= length / 10 ? v : Math.round(v * 2)));
               } else {
                 setScale((v) => (v > 1 ? v / 2 : 1));
               }
             }}
             onMouseLeave={() => {
-              setScrolling(false);
+              scrolling.current = false;
             }}
           >
             {/* {grid line} */}
@@ -424,7 +441,7 @@ export default function TimeseriesChart(props: {
                   />
                   <rect
                     className="y-transition"
-                    x={xScale(realIndex)}
+                    x={xScale(realIndex) - 0.5}
                     y={yScale(data.upper)}
                     height={yScale(data.lower) - yScale(data.upper)}
                     width={1}
@@ -600,6 +617,10 @@ export default function TimeseriesChart(props: {
                   rx={paddingTop / 2}
                   ry={paddingTop / 2}
                   fill="var(--highlight)"
+                  onClick={() => {
+                    transitionOn.current = true;
+                    setDivided((v) => !v);
+                  }}
                 ></rect>
                 <text
                   x={width - rightPadding * 2 + smallFont + 2}
@@ -607,7 +628,7 @@ export default function TimeseriesChart(props: {
                   fontSize={smallFont}
                   fill={"var(--foreground)"}
                   onClick={() => {
-                    setTransitionOn(true);
+                    transitionOn.current = true;
                     setDivided((v) => !v);
                   }}
                 >
