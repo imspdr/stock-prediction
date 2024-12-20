@@ -18,6 +18,7 @@ export default function TimeseriesChart(props: {
   const smallFont = (30 / 1000) * height;
   const largeFont = (35 / 1000) * height;
   const rightPadding = smallFont * 5;
+  const maxScale = 64;
 
   const predictedColor = "var(--highlight)";
   const givenColor = "var(--chart-gray)";
@@ -43,7 +44,7 @@ export default function TimeseriesChart(props: {
   // add key down scroll effect
   const keyDownEvent = function (ev: KeyboardEvent) {
     if (ev.key === "ArrowRight") {
-      setNowIndex((v) => Math.min(v + 1, length - length / scale));
+      setNowIndex((v) => Math.min(v + 1, Math.floor(length - length / scale)));
     } else if (ev.key === "ArrowLeft") {
       setNowIndex((v) => Math.max(0, v - 1));
     }
@@ -210,10 +211,7 @@ export default function TimeseriesChart(props: {
                   return Math.min(
                     Math.max(
                       0,
-                      v +
-                        Math.floor(
-                          ((startX.current - e.clientX) / window.innerWidth) * scaledLength
-                        )
+                      v + Math.floor(((startX.current - e.clientX) / width) * scaledLength)
                     ),
                     length - scaledLength
                   );
@@ -242,11 +240,12 @@ export default function TimeseriesChart(props: {
                 const distance = Math.sqrt(
                   Math.pow(t1.clientX - t2.clientX, 2) + Math.pow(t1.clientY - t2.clientY, 2)
                 );
-                if (scaleDistance !== null) {
-                  if (distance > scaleDistance.current!) {
-                    setScale((v) => (v >= length / 10 ? v : Math.round(v * 2)));
-                  } else {
-                    setScale((v) => (v > 1 ? v / 2 : 1));
+                if (scaleDistance.current !== null) {
+                  const delta = distance - scaleDistance.current;
+                  if (Math.abs(delta) > 2) {
+                    setScale((v) =>
+                      Math.max(1, Math.min(maxScale, v + Math.round(v + delta * 0.005)))
+                    );
                   }
                 }
                 scaleDistance.current = distance;
@@ -255,10 +254,7 @@ export default function TimeseriesChart(props: {
                   return Math.min(
                     Math.max(
                       0,
-                      v +
-                        Math.floor(
-                          ((startX.current - t1.clientX) / window.innerWidth) * scaledLength
-                        )
+                      v + Math.floor(((startX.current - t1.clientX) / width) * scaledLength)
                     ),
                     length - scaledLength
                   );
@@ -271,9 +267,9 @@ export default function TimeseriesChart(props: {
             }}
             onWheel={(e) => {
               if (e.deltaY < 0) {
-                setScale((v) => (v >= length / 10 ? v : Math.round(v * 2)));
+                setScale((v) => Math.min(maxScale, v * 2));
               } else {
-                setScale((v) => (v > 1 ? v / 2 : 1));
+                setScale((v) => Math.max(1, v / 2));
               }
             }}
             onMouseLeave={() => {
@@ -641,7 +637,7 @@ export default function TimeseriesChart(props: {
                   fill={"var(--foreground)"}
                   text-anchor="middle"
                   onClick={() => {
-                    setScale((v) => (v > 1 ? v / 2 : 1));
+                    setScale((v) => Math.max(1, v / 2));
                   }}
                 >
                   {"<"}
@@ -653,7 +649,7 @@ export default function TimeseriesChart(props: {
                   fill={"var(--foreground)"}
                   text-anchor="middle"
                 >
-                  {`x${scale}`}
+                  {`x${scale.toFixed(1)}`}
                 </text>
                 <text
                   x={width - rightPadding + smallFont * 4}
@@ -662,7 +658,7 @@ export default function TimeseriesChart(props: {
                   fill={"var(--foreground)"}
                   text-anchor="middle"
                   onClick={() => {
-                    setScale((v) => (v >= length / 10 ? v : v * 2));
+                    setScale((v) => Math.min(maxScale, v * 2));
                   }}
                 >
                   {">"}
