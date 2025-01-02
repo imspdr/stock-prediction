@@ -28,7 +28,7 @@ export default function TimeseriesChart(props: {
   const [nowIndex, setNowIndex] = useState(0);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  const transitionOn = useRef<boolean | null>(null);
+  const transitionOn = useRef<boolean | null>(true);
   const scrolling = useRef<boolean | null>(null);
   const startX = useRef<number>(0);
   const scaleDistance = useRef<number | null>(null);
@@ -41,12 +41,22 @@ export default function TimeseriesChart(props: {
     transitionOn.current = false;
   }, [divided]);
 
+  const divide = () => {
+    transitionOn.current = true;
+    setDivided((v) => !v);
+  };
   // add key down scroll effect
   const keyDownEvent = function (ev: KeyboardEvent) {
     if (ev.key === "ArrowRight") {
       setNowIndex((v) => Math.min(v + 1, Math.floor(length - length / scale)));
     } else if (ev.key === "ArrowLeft") {
       setNowIndex((v) => Math.max(0, v - 1));
+    } else if (ev.key === "ArrowUp") {
+      setScale((v) => Math.min(maxScale, v * 2));
+    } else if (ev.key === "ArrowDown") {
+      setScale((v) => Math.max(1, v / 2));
+    } else if (ev.key === " ") {
+      divide();
     }
   };
   useEffect(() => {
@@ -626,10 +636,7 @@ export default function TimeseriesChart(props: {
                   y={paddingTop + 2}
                   fontSize={smallFont}
                   fill={"var(--foreground)"}
-                  onClick={() => {
-                    transitionOn.current = true;
-                    setDivided((v) => !v);
-                  }}
+                  onClick={divide}
                 >
                   {divided ? "합치기" : "펼치기"}
                 </text>
