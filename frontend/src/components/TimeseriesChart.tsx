@@ -18,7 +18,7 @@ export default function TimeseriesChart(props: {
   const smallFont = (30 / 1000) * height;
   const largeFont = (35 / 1000) * height;
   const rightPadding = smallFont * 5;
-  const maxScale = 64;
+  const maxScale = 32;
 
   const predictedColor = "var(--highlight)";
   const givenColor = "var(--chart-gray)";
@@ -28,10 +28,13 @@ export default function TimeseriesChart(props: {
   const [nowIndex, setNowIndex] = useState(0);
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  const transitionOn = useRef<boolean | null>(true);
+  const transitionOn = useRef<boolean | null>(null);
   const scrolling = useRef<boolean | null>(null);
+  const nowX = useRef<number>(0);
   const startX = useRef<number>(0);
   const scaleDistance = useRef<number | null>(null);
+  const velocity = useRef<number>(0);
+  const lastTimestamp = useRef<number>(0);
 
   useEffect(() => {
     setNowIndex((v) => Math.min(length - scaledLength, v));
@@ -65,6 +68,45 @@ export default function TimeseriesChart(props: {
       window.removeEventListener("keydown", keyDownEvent);
     };
   }, [scale]);
+
+  const calcStart = (clientX: number) => {
+    scrolling.current = true;
+    startX.current = clientX;
+    nowX.current = clientX;
+    lastTimestamp.current = performance.now();
+  };
+  const calcEnd = () => {
+    const t = Math.max(performance.now() - lastTimestamp.current, 200);
+    const distance =
+      (nowX.current - startX.current) / ((width - leftPadding - rightPadding) / scaledLength);
+    velocity.current = (distance / t) * 100;
+    scrolling.current = false;
+    if (t < 1000) {
+      requestAnimationFrame(applyInertia);
+    }
+  };
+
+  const applyInertia = () => {
+    velocity.current *= 0.95;
+
+    setNowIndex((v) => {
+      return Math.min(Math.max(0, v + Math.round(velocity.current)), length - scaledLength);
+    });
+
+    if (Math.abs(velocity.current) >= 1) {
+      requestAnimationFrame(applyInertia);
+    }
+  };
+  const setIndex = (clientPos: number) => {
+    const gap =
+      (startX.current - clientPos) / ((width - leftPadding - rightPadding) / scaledLength);
+    if (Math.abs(gap) >= 1) {
+      setNowIndex((v) => {
+        return Math.min(Math.max(0, v + (gap >= 0 ? 1 : -1)), length - scaledLength);
+      });
+      startX.current = clientPos;
+    }
+  };
 
   const hoverTexts = [
     {
@@ -209,27 +251,14 @@ export default function TimeseriesChart(props: {
           <svg
             viewBox={`0 0 ${width} ${height}`}
             onMouseDown={(e) => {
-              scrolling.current = true;
-              startX.current = e.clientX;
+              calcStart(e.clientX);
             }}
             onMouseUp={() => {
-              scrolling.current = false;
+              calcEnd();
             }}
             onMouseMove={(e) => {
               if (scrolling.current && scale > 1) {
-                setNowIndex((v) => {
-                  return Math.min(
-                    Math.max(
-                      0,
-                      v +
-                        Math.floor(
-                          ((startX.current - e.clientX) / (width - leftPadding - rightPadding)) *
-                            scaledLength
-                        )
-                    ),
-                    length - scaledLength
-                  );
-                });
+                setIndex(e.clientX);
               }
               const svgElement = e.currentTarget;
               const rect = svgElement.getBoundingClientRect();
@@ -243,8 +272,7 @@ export default function TimeseriesChart(props: {
             }}
             onTouchStart={(e) => {
               if (e.touches[0]) {
-                scrolling.current = true;
-                startX.current = e.touches[0].clientX;
+                calcStart(e.touches[0].clientX);
               }
             }}
             onTouchMove={(ev) => {
@@ -263,20 +291,11 @@ export default function TimeseriesChart(props: {
               //   scaleDistance.current = distance;
               // } else
               if (scrolling.current && scale > 1 && t1) {
-                setNowIndex((v) => {
-                  return Math.min(
-                    Math.max(
-                      0,
-                      v + Math.floor(((startX.current - t1.clientX) / width) * scaledLength)
-                    ),
-                    length - scaledLength
-                  );
-                });
+                setIndex(t1.clientX);
               }
             }}
-            onTouchEnd={() => {
-              scrolling.current = false;
-              scaleDistance.current = null;
+            onTouchEnd={(e) => {
+              calcEnd();
             }}
             onWheel={(e) => {
               if (e.deltaY < 0) {
