@@ -1,7 +1,6 @@
 import logging
 import pandas as pd
 from prophet import Prophet
-from sympy.stats import given
 
 
 def is_number(v):
