@@ -36,7 +36,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    //rootStore.setKospi200();
+    rootStore.setKospi200();
   }, []);
 
   const toggleTheme = () => {

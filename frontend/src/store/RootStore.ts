@@ -14,7 +14,7 @@ export class RootStore {
   }[];
 
   constructor() {
-    this.selectedCode = "asd";
+    this.selectedCode = "";
     this.kospi200 = [];
     this.cacheData = [];
     this.width = 800;
