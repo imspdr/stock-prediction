@@ -4,7 +4,6 @@ import AutoComplete from "./components/AutoComplete";
 import TimeseriesChart from "./components/TimeseriesChart";
 import { useRootStore } from "@src/store/RootStoreProvider";
 import NewsAnimation from "./components/NewsAnimation";
-import { Skeleton } from "@mui/material";
 import timeseries from "@src/store/timeseries.json";
 import newss from "@src/store/news.json";
 
@@ -12,13 +11,13 @@ function MainPage() {
   const rootStore = useRootStore();
   const chartHeight = Math.round(((rootStore.height - 48) / 13) * 10);
   const newsHeight = Math.max(24, Math.min(chartHeight / 20, 48));
-  // const selectedStock = {
-  //   code: "asd",
-  //   timeseriesData: timeseries,
-  //   newsData: newss,
-  // };
+  const selectedStock = {
+    code: "asd",
+    timeseriesData: timeseries,
+    newsData: newss,
+  };
 
-  const selectedStock = rootStore.cacheData.find((cache) => cache.code === rootStore.selectedCode);
+  //const selectedStock = rootStore.cacheData.find((cache) => cache.code === rootStore.selectedCode);
   return (
     <div
       css={css`
