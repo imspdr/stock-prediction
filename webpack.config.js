@@ -10,7 +10,7 @@ module.exports = (env) => {
       devtool: "eval-source-map",
       output: {
         path: path.join(__dirname, "docs"),
-        filename: "main.js",
+        filename: "main.[contenthash].js",
         publicPath: "/stock-prediction/",
       },
       resolve: {
@@ -24,6 +24,7 @@ module.exports = (env) => {
           template: path.resolve(__dirname, "src/index.ejs"),
           favicon: "imspdr.png",
           filename: "index.html",
+          inject: 'body',
         }),
       ],
       module: {
@@ -81,7 +82,7 @@ module.exports = (env) => {
       devtool: false,
       output: {
         path: path.join(__dirname, "docs"),
-        filename: "main.js",
+        filename: "main.[contenthash].js",
         publicPath: "/stock-prediction/",
       },
       resolve: {
@@ -95,6 +96,7 @@ module.exports = (env) => {
           template: path.resolve(__dirname, "src/index.ejs"),
           favicon: "imspdr.png",
           filename: "index.html",
+          inject: 'body',
         }),
         new HtmlWebpackPlugin({
           template: path.resolve(__dirname, "src/404.html"),
