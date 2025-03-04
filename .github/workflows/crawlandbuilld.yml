@@ -1,7 +1,7 @@
 name: run-python-crawler-build-page-deploy
 permissions:
   pages: write
-  id-token: write 
+  id-token: write
 
 on:
   schedule:
@@ -35,7 +35,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Build Frontend
         run: npm run build
