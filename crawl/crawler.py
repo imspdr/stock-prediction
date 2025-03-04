@@ -9,8 +9,8 @@ if __name__ == "__main__":
     last_result = []
     kospi200 = crawl_kospi200()
     for i, stock in enumerate(kospi200):
-        data = crawl_stock_data(stock["code"], 10)
-        result = run_prophet(data, 10)
+        data = crawl_stock_data(stock["code"], 20)
+        result = run_prophet(data, 20)
         news = crawl_news(stock["name"])
         last_result.append({
             "code": stock["code"],
@@ -19,8 +19,6 @@ if __name__ == "__main__":
             "news": news,
             "result": result
         })
-        if i > 10: 
-            break
 
 
     filename = "data.json"

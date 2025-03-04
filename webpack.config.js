@@ -11,7 +11,7 @@ module.exports = (env) => {
       output: {
         path: path.join(__dirname, "docs"),
         filename: "main.js",
-        publicPath: "/stock/",
+        publicPath: "/stock-prediction/",
       },
       resolve: {
         extensions: [".js", ".jsx", ".ts", ".tsx"],
@@ -68,7 +68,7 @@ module.exports = (env) => {
       },
       devServer: {
         historyApiFallback: {
-          index: "/stock/"
+          index: "/stock-prediction/"
         },
         host: "localhost",
         port: 4545,
@@ -82,7 +82,7 @@ module.exports = (env) => {
       output: {
         path: path.join(__dirname, "docs"),
         filename: "main.js",
-        publicPath: "/stock/",
+        publicPath: "/stock-prediction/",
       },
       resolve: {
         extensions: [".js", ".jsx", ".ts", ".tsx"],
